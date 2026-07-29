@@ -101,23 +101,23 @@ function drawPlayer(ctx, player) {
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
   ctx.beginPath();
-  ctx.ellipse(player.x, player.y + 20, 15, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(player.x, player.y + 25, 19, 7, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
   ctx.save();
   ctx.fillStyle = '#e0629b';
   ctx.beginPath();
-  ctx.arc(x, y, 16, 0, Math.PI * 2);
+  ctx.arc(x, y, 21, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = '#a83f70';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
-  drawEmoji(ctx, player.eating ? '😋' : '🙂', x, y - 1, 20);
+  drawEmoji(ctx, player.eating ? '😋' : '🙂', x, y - 1, 26);
   ctx.restore();
 
   if (player.carryingFood) {
-    drawEmoji(ctx, '🍜', x, y - 28, 20);
+    drawEmoji(ctx, '🍜', x, y - 36, 26);
   }
 
   if (player.sprinting && player.moving) {
@@ -125,19 +125,19 @@ function drawPlayer(ctx, player) {
     ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x - 22, y + 4);
-    ctx.lineTo(x - 32, y + 4);
-    ctx.moveTo(x - 20, y - 6);
-    ctx.lineTo(x - 30, y - 6);
+    ctx.moveTo(x - 27, y + 5);
+    ctx.lineTo(x - 40, y + 5);
+    ctx.moveTo(x - 25, y - 8);
+    ctx.lineTo(x - 38, y - 8);
     ctx.stroke();
     ctx.restore();
   }
 
   ctx.save();
-  ctx.font = 'bold 11px sans-serif';
+  ctx.font = 'bold 12px sans-serif';
   ctx.fillStyle = '#5a3d2b';
   ctx.textAlign = 'center';
-  ctx.fillText('Cherie', x, y + 30);
+  ctx.fillText('Cherie', x, y + 38);
   ctx.restore();
 }
 
@@ -220,16 +220,19 @@ function drawNpc(ctx, npc) {
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.15)';
   ctx.beginPath();
-  ctx.ellipse(npc.x, npc.y + 18, 13, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(npc.x, npc.y + 22, 16, 6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
   ctx.save();
   ctx.fillStyle = '#6c8ebf';
   ctx.beginPath();
-  ctx.arc(npc.x, npc.y + bobY, 14, 0, Math.PI * 2);
+  ctx.arc(npc.x, npc.y + bobY, 18, 0, Math.PI * 2);
   ctx.fill();
-  drawEmoji(ctx, '🙂', npc.x, npc.y + bobY - 1, 17);
+  ctx.strokeStyle = '#4d6a94';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  drawEmoji(ctx, '🙂', npc.x, npc.y + bobY - 1, 22);
   ctx.restore();
 }
 
