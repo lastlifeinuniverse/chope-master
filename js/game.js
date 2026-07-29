@@ -409,21 +409,53 @@ function bindInput() {
     }
   });
 
+  // Track which flag each active touch/pointer is holding down, keyed by
+  // pointerId. Release is handled at the window level (not on the button
+  // itself) because on real touchscreens a finger easily drifts off a small
+  // button before lifting, and the button's own pointerup/pointerleave can
+  // then never fire — leaving that direction stuck "on" forever.
+  const pointerFlags = new Map();
+
   const bindHold = (id, flag) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const on = (ev) => { ev.preventDefault(); Input[flag] = true; };
-    const off = (ev) => { ev.preventDefault(); Input[flag] = false; };
-    el.addEventListener('pointerdown', on);
-    el.addEventListener('pointerup', off);
-    el.addEventListener('pointerleave', off);
-    el.addEventListener('pointercancel', off);
+    el.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      pointerFlags.set(ev.pointerId, flag);
+      Input[flag] = true;
+    });
   };
   bindHold('btn-up', 'up');
   bindHold('btn-down', 'down');
   bindHold('btn-left', 'left');
   bindHold('btn-right', 'right');
   bindHold('btn-sprint', 'sprint');
+
+  const releasePointer = (ev) => {
+    const flag = pointerFlags.get(ev.pointerId);
+    if (flag) {
+      Input[flag] = false;
+      pointerFlags.delete(ev.pointerId);
+    }
+  };
+  window.addEventListener('pointerup', releasePointer);
+  window.addEventListener('pointercancel', releasePointer);
+
+  // Extra safety net: if a touch ends without ever delivering pointerup/
+  // pointercancel at all (app switch, incoming call, OS alert mid-hold),
+  // drop every held direction rather than leave Cherie walking forever.
+  const releaseAllMovement = () => {
+    Input.up = false;
+    Input.down = false;
+    Input.left = false;
+    Input.right = false;
+    Input.sprint = false;
+    pointerFlags.clear();
+  };
+  window.addEventListener('blur', releaseAllMovement);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) releaseAllMovement();
+  });
 
   const interactBtn = document.getElementById('btn-interact');
   if (interactBtn) {
