@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Chope Master</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+  <div id="hud">
+    <div id="stress-wrap" class="hud-item">
+      <span class="hud-icon" title="Stress">❤️</span>
+      <div class="meter"><div id="stress-fill" class="meter-fill"></div></div>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon" title="Tissue packets remaining">🧻</span>
+      <span id="tissue-count">3</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon" title="Food status">🍜</span>
+      <span id="food-status">Not Ordered</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-icon" title="Your table">📍</span>
+      <span id="table-indicator">no table choped yet</span>
+    </div>
+  </div>
+
+  <div id="game-wrap">
+    <canvas id="game-canvas" width="960" height="600"></canvas>
+
+    <div id="action-timer-wrap" class="hidden"><div id="action-timer-fill"></div></div>
+    <div id="interact-prompt" class="hidden"></div>
+    <div id="toast" class="hidden"></div>
+
+    <div id="touch-controls">
+      <div id="dpad">
+        <button id="btn-up" class="dpad-btn up" aria-label="Move up">▲</button>
+        <button id="btn-left" class="dpad-btn left" aria-label="Move left">◀</button>
+        <button id="btn-right" class="dpad-btn right" aria-label="Move right">▶</button>
+        <button id="btn-down" class="dpad-btn down" aria-label="Move down">▼</button>
+      </div>
+      <div id="action-buttons">
+        <button id="btn-sprint" class="action-btn" aria-label="Sprint">SPRINT</button>
+        <button id="btn-interact" class="action-btn primary" aria-label="Interact">E</button>
+      </div>
+    </div>
+
+    <div id="screen-start" class="screen hidden">
+      <div class="screen-card">
+        <h1>🧻 Chope Master</h1>
+        <p class="subtitle">A Singapore hawker centre survival game</p>
+        <p>Help <strong>Cherie</strong> chope a table, order her meal, defend the tissue packet from wind and birds, and eat in peace!</p>
+        <ol class="howto">
+          <li>Walk to an empty table and press <strong>E</strong> to chope it with a tissue packet.</li>
+          <li>Head to the stall and press <strong>E</strong> to join the queue.</li>
+          <li>Watch out — wind and birds may steal your tissue while you wait!</li>
+          <li>If it's gone, run back and chope again before someone takes your table.</li>
+          <li>Collect your food when ready, bring it back, and press <strong>E</strong> to sit and eat.</li>
+        </ol>
+        <p class="controls-hint">Move: <kbd>WASD</kbd>/<kbd>Arrows</kbd> &nbsp; Sprint: <kbd>Shift</kbd> &nbsp; Interact: <kbd>E</kbd></p>
+        <button id="btn-start" class="btn-primary">Start Game</button>
+      </div>
+    </div>
+
+    <div id="screen-win" class="screen hidden">
+      <div class="screen-card">
+        <h1>🎉 Level Complete!</h1>
+        <p>Cherie enjoyed her meal in peace.</p>
+        <div id="win-stats" class="stats"></div>
+        <button id="btn-play-again" class="btn-primary">Play Again</button>
+      </div>
+    </div>
+
+    <div id="screen-lose" class="screen hidden">
+      <div class="screen-card">
+        <h1>😭 Game Over</h1>
+        <p id="lose-reason"></p>
+        <button id="btn-try-again" class="btn-primary">Try Again</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer-hint">Chope Master — MVP prototype</p>
+</div>
+
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/events.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
