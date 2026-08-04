@@ -153,8 +153,14 @@ function onTelegraph(type, table) {
   else UI.toast(`🐈 A cat is eyeing table #${table.id + 1}'s tissue...`, 1200);
 }
 
-function onCatRetrieved(table) {
-  UI.toast(`🐈 Got it back! Table #${table.id + 1}'s tissue is safe.`);
+function onCatRetrieved() {
+  G.tissueCount++;
+  UI.setTissueCount(G.tissueCount);
+  UI.toast('🐈 Got your tissue packet back! Chope a table again to use it.');
+}
+
+function onCatEscaped(table) {
+  UI.toast(`🐈 The cat got away with table #${table.id + 1}'s tissue for good...`, 1800);
 }
 
 function onTissueLost(table, type) {
@@ -165,7 +171,7 @@ function onTissueLost(table, type) {
 
   const label = type === 'wind' ? '💨 Wind blew your tissue off'
     : type === 'bird' ? '🐦 A bird stole your tissue from'
-    : '🐈 A cat ran off for good with the tissue from';
+    : '🐈 A cat snatched the tissue from';
   UI.toast(`${label} table #${table.id + 1}!`);
 
   const foodOrdered = ['queuing', 'preparing', 'ready', 'carrying'].includes(G.foodStatus);
@@ -305,7 +311,7 @@ function syncHud() {
 function update(dtMs) {
   updatePlayerMovement(dtMs);
   G.npcs.forEach((npc) => updateNpc(npc, dtMs, G.tables));
-  RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatRetrieved);
+  RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatRetrieved, onCatEscaped);
   updateFoodTimer(dtMs);
   updateGrace(dtMs);
   updateEating(dtMs);

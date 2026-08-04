@@ -21,7 +21,7 @@ const RandomEvents = {
     this.t = 0;
   },
 
-  update(dtMs, tables, player, bird, cat, onTissueLost, onTelegraph, onCatRetrieved) {
+  update(dtMs, tables, player, bird, cat, onTissueLost, onTelegraph, onCatRetrieved, onCatEscaped) {
     if (!this.active) {
       this.checkTimer -= dtMs;
       this.catCheckTimer -= dtMs;
@@ -47,7 +47,7 @@ const RandomEvents = {
     this.t += dtMs;
     if (this.type === 'wind') this.updateWind(onTissueLost);
     else if (this.type === 'bird') this.updateBird(bird, onTissueLost);
-    else if (this.type === 'cat') this.updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved);
+    else if (this.type === 'cat') this.updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved, onCatEscaped);
   },
 
   startWindOrBird(table, bird, onTelegraph) {
@@ -144,7 +144,7 @@ const RandomEvents = {
     if (onTelegraph) onTelegraph('cat', table);
   },
 
-  updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved) {
+  updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved, onCatEscaped) {
     const table = this.targetTable;
 
     if (cat.state === 'approaching') {
@@ -160,8 +160,15 @@ const RandomEvents = {
       cat.t += dtMs;
       table.tissueOpacity = clamp(1 - cat.t / CAT_GRAB_MS, 0, 1);
       if (cat.t >= CAT_GRAB_MS) {
-        table.tissueOpacity = 0;
+        // The steal is real the instant the cat has it — same immediate
+        // consequence as a successful wind/bird hit (table opens up, grace
+        // period starts). Chasing the cat down doesn't undo the table loss;
+        // it only wins back the tissue *packet* for later use.
+        table.state = 'empty';
+        table.tissueOffset = { x: 0, y: 0 };
+        table.tissueOpacity = 1;
         cat.state = 'fleeing';
+        if (onTissueLost) onTissueLost(table, 'cat');
       }
       return;
     }
@@ -179,12 +186,18 @@ const RandomEvents = {
       return;
     }
 
-    // stopped_with_tissue and retrieving share the retrieval-window countdown
+    // stopped_with_tissue and retrieving share the retrieval-window countdown.
+    // The table's fate was already decided at grab time above, so a timeout
+    // here just means the packet itself is gone for good — no further table
+    // consequence, hence no onTissueLost() call this time.
     cat.windowTimer -= dtMs;
     if (cat.windowTimer <= 0) {
       cat.active = false;
       cat.state = 'idle';
-      this.finishLoss(table, 'cat', onTissueLost);
+      this.active = false;
+      this.type = null;
+      this.targetTable = null;
+      if (onCatEscaped) onCatEscaped(table);
       return;
     }
 
@@ -198,7 +211,6 @@ const RandomEvents = {
       if (cat.holdTimer <= 0) {
         cat.active = false;
         cat.state = 'idle';
-        table.tissueOpacity = 1;
         this.active = false;
         this.type = null;
         this.targetTable = null;
