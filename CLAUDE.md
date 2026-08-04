@@ -1,11 +1,11 @@
 # Chope Master — Project Guide
 
 ## Overview
-Chope Master is a casual 2D browser game inspired by Singapore hawker centre culture. The player (Cherie) must reserve a table with tissue paper, order food, survive random disruption events (wind/birds stealing the tissue), collect the meal, and eat before losing the seat.
+Chope Master is a casual 2D browser game inspired by Singapore hawker centre culture. The player chooses one of three characters (Cherie, Uncle Anson, or Zongyan), then must reserve a table with tissue paper, order food, survive random disruption events (wind/birds stealing the tissue), collect the meal, and eat before losing the seat. Each character has distinct stats affecting gameplay difficulty and strategy.
 
 **Goal**: MVP playable on mobile and desktop browsers with no build step or dependencies.
 
-**Status**: MVP complete and playable. GitHub Pages hosted at `https://lastlifeinuniverse.github.io/chope-master/`
+**Status**: MVP complete with character selection. GitHub Pages hosted at `https://lastlifeinuniverse.github.io/chope-master/`
 
 ---
 
@@ -30,6 +30,24 @@ chope-master/
     ├── ui.js               # DOM manipulation (HUD, toasts, screens)
     └── game.js             # Main loop, state machine, input binding
 ```
+
+### Characters
+
+Three selectable characters, each with distinct stats that affect gameplay:
+
+| Character | Emoji | Speed | Tissues | Playstyle |
+|-----------|-------|-------|---------|-----------|
+| **Cherie** | 🙂 | 2.4 (normal) | 3 | Balanced, good all-rounder |
+| **Uncle Anson** | 🦍 | 1.6 (slow) | 5 | Tank build, forgiving difficulty |
+| **Zongyan** | 🧚 | 3.2 (fast) | 2 | High-risk/high-reward speedrun |
+
+Character data lives in `constants.js` (the `CHARACTERS` object). When a player selects a character at the start screen, that character's `speed` and `tissues` values are copied into the game state (`G.playerSpeed`, `G.tissueCount`). The character object is also stored on the player entity, so the emoji renders correctly in `drawPlayer()`.
+
+**Character select flow**:
+1. Boot shows character-select screen (not start screen)
+2. Player clicks a character's "Select" button
+3. `initGame(character)` initializes with that character's stats
+4. Game enters playing phase
 
 ### Core Concepts
 
