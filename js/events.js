@@ -1,29 +1,44 @@
-// Random events that threaten a chope'd tissue packet: wind & birds.
-// Only one event is ever active at a time (per MVP spec).
+// Random events that threaten a chope'd tissue packet: wind, birds, and cats.
+// Only one event is ever active at a time (per MVP spec). Wind/bird share one
+// check timer + chance roll; the cat is rolled independently (its own
+// CAT_CHANCE) but still gated by the same `active` mutex so it never overlaps
+// a wind/bird event (or another cat event).
 
 const RandomEvents = {
   checkTimer: EVENT_CHECK_MS,
+  catCheckTimer: EVENT_CHECK_MS,
   active: false,
-  type: null, // 'wind' | 'bird'
+  type: null, // 'wind' | 'bird' | 'cat'
   targetTable: null,
   t: 0,
 
   reset() {
     this.checkTimer = EVENT_CHECK_MS;
+    this.catCheckTimer = EVENT_CHECK_MS;
     this.active = false;
     this.type = null;
     this.targetTable = null;
     this.t = 0;
   },
 
-  update(dtMs, tables, bird, onTissueLost, onTelegraph) {
+  update(dtMs, tables, player, bird, cat, onTissueLost, onTelegraph, onCatRetrieved) {
     if (!this.active) {
       this.checkTimer -= dtMs;
+      this.catCheckTimer -= dtMs;
+
       if (this.checkTimer <= 0) {
         this.checkTimer = EVENT_CHECK_MS;
         const reserved = tables.filter((t) => t.state === 'reserved');
-        if (reserved.length > 0 && Math.random() < EVENT_CHANCE) {
-          this.start(choice(reserved), bird, onTelegraph);
+        if (!this.active && reserved.length > 0 && Math.random() < EVENT_CHANCE) {
+          this.startWindOrBird(choice(reserved), bird, onTelegraph);
+        }
+      }
+
+      if (!this.active && this.catCheckTimer <= 0) {
+        this.catCheckTimer = EVENT_CHECK_MS;
+        const reserved = tables.filter((t) => t.state === 'reserved');
+        if (reserved.length > 0 && Math.random() < CAT_CHANCE) {
+          this.startCat(choice(reserved), cat, onTelegraph);
         }
       }
       return;
@@ -32,9 +47,10 @@ const RandomEvents = {
     this.t += dtMs;
     if (this.type === 'wind') this.updateWind(onTissueLost);
     else if (this.type === 'bird') this.updateBird(bird, onTissueLost);
+    else if (this.type === 'cat') this.updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved);
   },
 
-  start(table, bird, onTelegraph) {
+  startWindOrBird(table, bird, onTelegraph) {
     this.active = true;
     this.targetTable = table;
     this.type = Math.random() < 0.5 ? 'wind' : 'bird';
@@ -107,6 +123,89 @@ const RandomEvents = {
         this.finishLoss(table, 'bird', onTissueLost);
       }
     }
+  },
+
+  startCat(table, cat, onTelegraph) {
+    this.active = true;
+    this.targetTable = table;
+    this.type = 'cat';
+    this.t = 0;
+
+    cat.active = true;
+    cat.state = 'approaching';
+    cat.x = table.x;
+    cat.y = CANVAS_H + 30;
+    cat.targetTableId = table.id;
+    cat.hideout = choice(CAT_HIDEOUT_POSITIONS);
+    cat.t = 0;
+    cat.windowTimer = 0;
+    cat.holdTimer = 0;
+
+    if (onTelegraph) onTelegraph('cat', table);
+  },
+
+  updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved) {
+    const table = this.targetTable;
+
+    if (cat.state === 'approaching') {
+      const arrived = moveToward(cat, { x: table.x, y: table.y + 22 }, CAT_SPEED);
+      if (arrived) {
+        cat.state = 'grabbing';
+        cat.t = 0;
+      }
+      return;
+    }
+
+    if (cat.state === 'grabbing') {
+      cat.t += dtMs;
+      table.tissueOpacity = clamp(1 - cat.t / CAT_GRAB_MS, 0, 1);
+      if (cat.t >= CAT_GRAB_MS) {
+        table.tissueOpacity = 0;
+        cat.state = 'fleeing';
+      }
+      return;
+    }
+
+    if (cat.state === 'fleeing') {
+      // Retrieval window starts once the cat actually settles at its hideout,
+      // not from when it starts running — flee duration varies with distance
+      // and framerate, and starting the clock earlier could burn away the
+      // player's whole window before the cat is even catchable.
+      const arrived = moveToward(cat, cat.hideout, CAT_SPEED);
+      if (arrived) {
+        cat.state = 'stopped_with_tissue';
+        cat.windowTimer = CAT_RETRIEVAL_WINDOW_MS;
+      }
+      return;
+    }
+
+    // stopped_with_tissue and retrieving share the retrieval-window countdown
+    cat.windowTimer -= dtMs;
+    if (cat.windowTimer <= 0) {
+      cat.active = false;
+      cat.state = 'idle';
+      this.finishLoss(table, 'cat', onTissueLost);
+      return;
+    }
+
+    if (cat.state === 'retrieving') {
+      if (dist(player, cat) >= INTERACT_RANGE) {
+        // wandered off mid-retrieval — must walk back and start again
+        cat.state = 'stopped_with_tissue';
+        return;
+      }
+      cat.holdTimer -= dtMs;
+      if (cat.holdTimer <= 0) {
+        cat.active = false;
+        cat.state = 'idle';
+        table.tissueOpacity = 1;
+        this.active = false;
+        this.type = null;
+        this.targetTable = null;
+        if (onCatRetrieved) onCatRetrieved(table);
+      }
+    }
+    // stopped_with_tissue: just waiting for the player to walk up and interact
   },
 
   finishLoss(table, type, onTissueLost) {

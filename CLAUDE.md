@@ -97,6 +97,12 @@ See `js/events.js`:
 3. Call `onTissueLost()` when event succeeds
 4. Call `onTelegraph()` to show warning toast before impact
 
+**Three event types exist**: wind, bird, cat. Wind/bird share one check timer + `EVENT_CHANCE` roll; the cat is rolled independently (`CAT_CHANCE`, same `EVENT_CHECK_MS` cadence) but still gated by the same `RandomEvents.active` mutex, so only one event of any kind runs at a time.
+
+The cat is the odd one out: unlike wind/bird (instant loss the moment the steal animation finishes), catching the cat is *recoverable*. It steals the tissue, flees to one of `CAT_HIDEOUT_POSITIONS`, and sits there with a `CAT_RETRIEVAL_WINDOW_MS` countdown. The table stays `'reserved'` the whole time (only `tissueOpacity` toggles to show the tissue is missing) so a successful retrieval requires no cleanup — grabbing it back just restores opacity. Only a full timeout calls `finishLoss()`/`onTissueLost()`, same as wind/bird.
+
+**Timing gotcha**: the retrieval window starts counting only once the cat *arrives* at its hideout (`stopped_with_tissue`), not when it starts fleeing. Flee duration varies with distance-to-hideout and framerate (`CAT_SPEED` is a per-frame step like `NPC_SPEED`, not dt-scaled), so starting the clock earlier could burn away the player's whole window before the cat is even catchable — this was caught by simulating a sustained 20fps/50ms-per-frame worst case (the ceiling `loop()` clamps dt to) during testing.
+
 ### Rendering Order
 All drawables in `draw()` are sorted by Y position before rendering (painter's algorithm). This keeps depth correct as sprites move around. If you add a new entity, add it to the `drawables` array in `draw()` with a Y value.
 

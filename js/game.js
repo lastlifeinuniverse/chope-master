@@ -15,6 +15,7 @@ function initGame(character) {
   G.tables = TABLE_POSITIONS.map((pos, i) => createTable(i, pos.x, pos.y));
   G.npcs = Array.from({ length: NPC_COUNT }, (_, i) => createNpc(i));
   G.bird = createBird();
+  G.cat = createCat();
 
   G.tissueCount = character.tissues;
   G.tissueUsedCount = 0;
@@ -92,6 +93,13 @@ function sitAndEat(table) {
 function getAvailableAction() {
   const p = G.player;
 
+  if (G.cat.active && G.cat.state === 'stopped_with_tissue' && dist(p, G.cat) < INTERACT_RANGE) {
+    return { type: 'cat_retrieve', label: '[E] Get your tissue back from the cat!' };
+  }
+  if (G.cat.active && G.cat.state === 'retrieving' && dist(p, G.cat) < INTERACT_RANGE) {
+    return { type: 'hint', label: 'Hold on... getting tissue back!' };
+  }
+
   if (G.foodStatus === 'carrying') {
     const table = G.tables[p.reservedTableId];
     if (table && table.state === 'reserved' && dist(p, table) < INTERACT_RANGE) {
@@ -128,13 +136,25 @@ function handleInteract() {
   else if (action.type === 'queue') joinQueue();
   else if (action.type === 'collect') collectFood();
   else if (action.type === 'eat') sitAndEat(action.table);
+  else if (action.type === 'cat_retrieve') startCatRetrieval();
+}
+
+function startCatRetrieval() {
+  G.cat.state = 'retrieving';
+  G.cat.holdTimer = CAT_RETRIEVAL_HOLD_MS;
+  UI.toast('🐈 Hold still, getting your tissue back...', 1400);
 }
 
 // ---------- Event callbacks ----------
 
 function onTelegraph(type, table) {
   if (type === 'wind') UI.toast(`💨 The wind is picking up near table #${table.id + 1}...`, 1200);
-  else UI.toast(`🐦 A bird is eyeing table #${table.id + 1}...`, 1200);
+  else if (type === 'bird') UI.toast(`🐦 A bird is eyeing table #${table.id + 1}...`, 1200);
+  else UI.toast(`🐈 A cat is eyeing table #${table.id + 1}'s tissue...`, 1200);
+}
+
+function onCatRetrieved(table) {
+  UI.toast(`🐈 Got it back! Table #${table.id + 1}'s tissue is safe.`);
 }
 
 function onTissueLost(table, type) {
@@ -143,7 +163,9 @@ function onTissueLost(table, type) {
   if (G.player.reservedTableId === table.id) G.player.reservedTableId = null;
   UI.setTableIndicator(G.player.reservedTableId);
 
-  const label = type === 'wind' ? '💨 Wind blew your tissue off' : '🐦 A bird stole your tissue from';
+  const label = type === 'wind' ? '💨 Wind blew your tissue off'
+    : type === 'bird' ? '🐦 A bird stole your tissue from'
+    : '🐈 A cat ran off for good with the tissue from';
   UI.toast(`${label} table #${table.id + 1}!`);
 
   const foodOrdered = ['queuing', 'preparing', 'ready', 'carrying'].includes(G.foodStatus);
@@ -265,7 +287,9 @@ function syncHud() {
   G.currentAction = action;
   UI.setPrompt(action ? action.label : null);
 
-  if (G.graceActive) {
+  if (G.cat.active && G.cat.state === 'retrieving') {
+    UI.setActionTimer(G.cat.holdTimer / CAT_RETRIEVAL_HOLD_MS, false);
+  } else if (G.graceActive) {
     UI.setActionTimer(G.graceTimer / TABLE_GRACE_MS, true);
   } else if (['queuing', 'preparing', 'ready', 'carrying'].includes(G.foodStatus)) {
     const fraction = G.foodTimer / G.foodTimerMax;
@@ -281,7 +305,7 @@ function syncHud() {
 function update(dtMs) {
   updatePlayerMovement(dtMs);
   G.npcs.forEach((npc) => updateNpc(npc, dtMs, G.tables));
-  RandomEvents.update(dtMs, G.tables, G.bird, onTissueLost, onTelegraph);
+  RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatRetrieved);
   updateFoodTimer(dtMs);
   updateGrace(dtMs);
   updateEating(dtMs);
@@ -363,6 +387,7 @@ function draw() {
     ...G.npcs.map((n) => ({ y: n.y, fn: () => drawNpc(ctx, n) })),
     { y: G.player.y, fn: () => drawPlayer(ctx, G.player) },
   ];
+  if (G.cat.active) drawables.push({ y: G.cat.y, fn: () => drawCat(ctx, G.cat) });
   drawables.sort((a, b) => a.y - b.y);
   drawables.forEach((d) => d.fn());
 

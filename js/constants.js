@@ -31,6 +31,22 @@ const NPC_COUNT = 2;
 const NPC_SIT_MS = [9000, 16000];
 const NPC_RETARGET_MS = 4000;
 
+// Cat event — sneaks up on a reserved table, steals the tissue, and flees to
+// a hideout. Player can chase it down and hold position nearby to get it
+// back before the retrieval window runs out. Rolled independently from the
+// wind/bird pool (own CAT_CHANCE) but reuses EVENT_CHECK_MS as its cadence
+// and shares the same "only one event active at a time" mutex.
+const CAT_SPEED = 2.6; // px/frame, ground movement (unscaled, matches NPC_SPEED style)
+const CAT_CHANCE = 0.22;
+const CAT_GRAB_MS = 500; // pause at the table while the tissue fades out
+const CAT_HIDEOUT_POSITIONS = [
+  { x: 60, y: 560 },
+  { x: 900, y: 560 },
+  { x: 480, y: 40 },
+];
+const CAT_RETRIEVAL_HOLD_MS = 2200; // must stay next to the cat this long to retrieve it
+const CAT_RETRIEVAL_WINDOW_MS = 11000; // total time the cat holds the tissue before it's gone for good
+
 const EAT_DURATION_MS = 3000;
 
 const TABLE_POSITIONS = [

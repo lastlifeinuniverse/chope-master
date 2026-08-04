@@ -278,3 +278,37 @@ function drawBird(ctx, bird) {
   drawEmoji(ctx, '🐦', 0, 0, 26);
   ctx.restore();
 }
+
+// ---------- Cat (random event actor) ----------
+
+function createCat() {
+  return {
+    active: false,
+    x: 0,
+    y: 0,
+    // idle | approaching | grabbing | fleeing | stopped_with_tissue | retrieving
+    state: 'idle',
+    targetTableId: null,
+    hideout: null,
+    t: 0, // phase-local timer (grab animation)
+    windowTimer: 0, // ms left before the tissue is lost for good
+    holdTimer: 0, // ms left for the player to complete retrieval
+  };
+}
+
+function drawCat(ctx, cat) {
+  if (!cat.active) return;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(cat.x, cat.y + 12, 14, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  drawEmoji(ctx, '🐈', cat.x, cat.y, 28);
+
+  if (cat.state === 'stopped_with_tissue' || cat.state === 'retrieving') {
+    drawEmoji(ctx, '🧻', cat.x + 18, cat.y - 18, 18);
+  }
+}
