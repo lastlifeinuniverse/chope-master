@@ -16,6 +16,7 @@ const UI = {
       actionTimerWrap: document.getElementById('action-timer-wrap'),
       actionTimerFill: document.getElementById('action-timer-fill'),
       screens: {
+        charSelect: document.getElementById('screen-char-select'),
         start: document.getElementById('screen-start'),
         win: document.getElementById('screen-win'),
         lose: document.getElementById('screen-lose'),
@@ -82,6 +83,11 @@ const UI = {
 
   hideAllScreens() {
     Object.values(this.els.screens).forEach((s) => s.classList.add('hidden'));
+  },
+
+  showCharacterSelect() {
+    this.hideAllScreens();
+    this.els.screens.charSelect.classList.remove('hidden');
   },
 
   showStart() {

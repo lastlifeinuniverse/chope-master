@@ -309,6 +309,72 @@ kbd {
   text-align: left;
 }
 
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.char-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.char-card:hover {
+  border-color: #d9503f;
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-2px);
+}
+
+.char-emoji {
+  font-size: 48px;
+  margin-bottom: 6px;
+}
+
+.char-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #3a2b1f;
+  margin-bottom: 4px;
+}
+
+.char-desc {
+  font-size: 11px;
+  color: #6b5236;
+  margin-bottom: 6px;
+  min-height: 20px;
+}
+
+.char-stats {
+  font-size: 10px;
+  color: #8a7660;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.btn-char {
+  border: none;
+  background: #d9503f;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 3px 8px rgba(217,80,63,0.3);
+  transition: background 0.2s ease;
+}
+
+.btn-char:hover {
+  background: #c8402f;
+}
+
 .btn-primary {
   margin-top: 2px;
   border: none;

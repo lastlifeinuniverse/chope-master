@@ -79,7 +79,8 @@ function drawTable(ctx, table, isPlayersTable) {
 
 // ---------- Player ----------
 
-function createPlayer() {
+function createPlayer(character) {
+  character = character || CHARACTERS.cherie;
   return {
     x: SPAWN_POINT.x,
     y: SPAWN_POINT.y,
@@ -90,6 +91,7 @@ function createPlayer() {
     bob: 0,
     eating: false,
     eatT: 0,
+    character,
   };
 }
 
@@ -106,14 +108,15 @@ function drawPlayer(ctx, player) {
   ctx.restore();
 
   ctx.save();
-  ctx.fillStyle = '#e0629b';
+  ctx.fillStyle = player.character.color;
   ctx.beginPath();
   ctx.arc(x, y, 21, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#a83f70';
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
   ctx.lineWidth = 2.5;
   ctx.stroke();
-  drawEmoji(ctx, player.eating ? '😋' : '🙂', x, y - 1, 26);
+  const displayEmoji = player.eating ? '😋' : player.character.emoji;
+  drawEmoji(ctx, displayEmoji, x, y - 1, 26);
   ctx.restore();
 
   if (player.carryingFood) {

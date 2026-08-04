@@ -9,14 +9,17 @@ const G = {}; // mutable game state, populated by initGame()
 
 // ---------- Setup ----------
 
-function initGame() {
-  G.player = createPlayer();
+function initGame(character) {
+  character = character || CHARACTERS.cherie;
+  G.player = createPlayer(character);
   G.tables = TABLE_POSITIONS.map((pos, i) => createTable(i, pos.x, pos.y));
   G.npcs = Array.from({ length: NPC_COUNT }, (_, i) => createNpc(i));
   G.bird = createBird();
 
-  G.tissueCount = TISSUE_START_COUNT;
+  G.tissueCount = character.tissues;
   G.tissueUsedCount = 0;
+  G.playerSpeed = character.speed;
+  G.playerSprintMult = SPRINT_MULT;
 
   G.foodStatus = 'not_ordered';
   G.foodTimer = 0;
@@ -188,7 +191,7 @@ function updatePlayerMovement(dtMs) {
     const len = Math.hypot(dx, dy);
     dx /= len;
     dy /= len;
-    const speed = PLAYER_SPEED * (Input.sprint ? SPRINT_MULT : 1) * (dtMs / 16.6667);
+    const speed = G.playerSpeed * (Input.sprint ? G.playerSprintMult : 1) * (dtMs / 16.6667);
     p.x = clamp(p.x + dx * speed, 24, CANVAS_W - 24);
     p.y = clamp(p.y + dy * speed, 24, CANVAS_H - 24);
     p.bob += dtMs / 90;
@@ -467,16 +470,31 @@ function bindInput() {
 }
 
 function bindButtons() {
-  document.getElementById('btn-start').addEventListener('click', initGame);
-  document.getElementById('btn-play-again').addEventListener('click', initGame);
-  document.getElementById('btn-try-again').addEventListener('click', initGame);
+  document.getElementById('btn-start').addEventListener('click', showCharacterSelect);
+  document.getElementById('btn-play-again').addEventListener('click', showCharacterSelect);
+  document.getElementById('btn-try-again').addEventListener('click', showCharacterSelect);
+
+  // Character select buttons
+  Object.entries(CHARACTERS).forEach(([key, char]) => {
+    const btn = document.getElementById(`btn-char-${key}`);
+    if (btn) {
+      btn.addEventListener('click', () => {
+        initGame(char);
+        G.phase = 'playing';
+        UI.hideAllScreens();
+      });
+    }
+  });
+}
+
+function showCharacterSelect() {
+  UI.showCharacterSelect();
 }
 
 function boot() {
   UI.init();
-  initGame();
-  G.phase = 'start';
-  UI.showStart();
+  G.phase = 'character_select';
+  UI.showCharacterSelect();
   bindInput();
   bindButtons();
   requestAnimationFrame(loop);
