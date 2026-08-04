@@ -493,8 +493,9 @@ function showCharacterSelect() {
 
 function boot() {
   UI.init();
-  G.phase = 'character_select';
-  UI.showCharacterSelect();
+  initGame(CHARACTERS.cherie);
+  G.phase = 'start';
+  UI.showStart();
   bindInput();
   bindButtons();
   requestAnimationFrame(loop);
