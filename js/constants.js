@@ -53,7 +53,7 @@ const NPC_SPAWN_POINTS = [
 const CHARACTERS = {
   cherie: {
     name: 'Cherie',
-    emoji: '🐱',
+    emoji: '👩‍🎨',
     desc: 'Balanced. Good at everything.',
     speed: 2.4,
     tissues: 3,

@@ -132,7 +132,7 @@ function drawPlayer(ctx, player) {
     ctx.scale(-1, 1);
     ctx.translate(-x, 0);
   }
-  drawEmoji(ctx, displayEmoji, x, y - 1, 26);
+  drawEmoji(ctx, displayEmoji, x, y - 1, 31);
   ctx.restore();
 
   if (player.carryingFood) {
