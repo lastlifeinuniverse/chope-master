@@ -53,11 +53,12 @@ const NPC_SPAWN_POINTS = [
 const CHARACTERS = {
   cherie: {
     name: 'Cherie',
-    emoji: '🙂',
+    emoji: '👧',
     desc: 'Balanced. Good at everything.',
     speed: 2.4,
     tissues: 3,
-    color: '#e0629b',
+    color: '#e879ac',
+    strokeColor: '#b8447e',
   },
   anson: {
     name: 'Uncle Anson',
@@ -65,7 +66,8 @@ const CHARACTERS = {
     desc: 'Slow but tanky. 5 tissues!',
     speed: 1.6,
     tissues: 5,
-    color: '#8b7355',
+    color: '#7ea3c9',
+    strokeColor: '#4f7398',
   },
   zongyan: {
     name: 'Zongyan',
@@ -73,6 +75,7 @@ const CHARACTERS = {
     desc: 'Quick but risky. Only 2 tissues.',
     speed: 3.2,
     tissues: 2,
-    color: '#d4a574',
+    color: '#b895e0',
+    strokeColor: '#8763b8',
   },
 };

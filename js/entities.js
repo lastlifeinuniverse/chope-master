@@ -112,7 +112,7 @@ function drawPlayer(ctx, player) {
   ctx.beginPath();
   ctx.arc(x, y, 21, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.strokeStyle = player.character.strokeColor;
   ctx.lineWidth = 2.5;
   ctx.stroke();
   const displayEmoji = player.eating ? '😋' : player.character.emoji;
@@ -140,7 +140,7 @@ function drawPlayer(ctx, player) {
   ctx.font = 'bold 12px sans-serif';
   ctx.fillStyle = '#5a3d2b';
   ctx.textAlign = 'center';
-  ctx.fillText('Cherie', x, y + 38);
+  ctx.fillText(player.character.name, x, y + 38);
   ctx.restore();
 }
 
