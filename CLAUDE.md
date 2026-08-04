@@ -37,7 +37,7 @@ Three selectable characters, each with distinct stats that affect gameplay:
 
 | Character | Emoji | Speed | Tissues | Playstyle |
 |-----------|-------|-------|---------|-----------|
-| **Cherie** | 🙂 | 2.4 (normal) | 3 | Balanced, good all-rounder |
+| **Cherie** | 👸 | 2.4 (normal) | 3 | Balanced, good all-rounder |
 | **Uncle Anson** | 🦍 | 1.6 (slow) | 5 | Tank build, forgiving difficulty |
 | **Zongyan** | 🧚 | 3.2 (fast) | 2 | High-risk/high-reward speedrun |
 
@@ -128,6 +128,7 @@ All drawables in `draw()` are sorted by Y position before rendering (painter's a
 - Art is emoji-based (browser's own emoji font)
 - Some platforms (old Android, some browsers) render emojis oddly
 - 🧻 tissue emoji may look different on different devices
+- **Avoid ZWJ (zero-width-joiner) emoji sequences for canvas-rendered characters** — e.g. `👩‍🎨` is actually two codepoints (woman + palette) glued by an invisible joiner. `ctx.fillText` doesn't reliably shape these into one glyph across platforms; on iOS Safari it rendered with a skewed anchor point, making the character look misaligned inside its circle even though the circle itself was positioned correctly. Stick to single-codepoint emoji (`👸`, `🦍`, `🧚`, `🐱`, `🦄`, etc.) for anything drawn via canvas.
 - Consider upgrading to custom SVG/sprite art if visual consistency matters for future releases
 
 ### NPC Behavior
