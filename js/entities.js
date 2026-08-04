@@ -115,7 +115,23 @@ function drawPlayer(ctx, player) {
   ctx.strokeStyle = player.character.strokeColor;
   ctx.lineWidth = 2.5;
   ctx.stroke();
+
+  if (player.character.hairBuns) {
+    ctx.fillStyle = '#3a2b1f';
+    ctx.beginPath();
+    ctx.arc(x - 13, y - 19, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 13, y - 19, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   const displayEmoji = player.eating ? '😋' : player.character.emoji;
+  if (player.character.flipEmoji) {
+    ctx.translate(x, 0);
+    ctx.scale(-1, 1);
+    ctx.translate(-x, 0);
+  }
   drawEmoji(ctx, displayEmoji, x, y - 1, 26);
   ctx.restore();
 

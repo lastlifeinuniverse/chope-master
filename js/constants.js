@@ -59,6 +59,7 @@ const CHARACTERS = {
     tissues: 3,
     color: '#e879ac',
     strokeColor: '#b8447e',
+    hairBuns: true,
   },
   anson: {
     name: 'Uncle Anson',
@@ -68,6 +69,7 @@ const CHARACTERS = {
     tissues: 5,
     color: '#7ea3c9',
     strokeColor: '#4f7398',
+    flipEmoji: true,
   },
   zongyan: {
     name: 'Zongyan',
