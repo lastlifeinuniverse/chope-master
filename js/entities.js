@@ -279,7 +279,7 @@ function drawBird(ctx, bird) {
   ctx.save();
   ctx.translate(bird.x, bird.y);
   if (bird.phase === 'out') ctx.scale(-1, 1);
-  drawEmoji(ctx, '🐦', 0, 0, 26);
+  drawEmoji(ctx, '🕊️', 0, 0, 26);
   ctx.restore();
 }
 

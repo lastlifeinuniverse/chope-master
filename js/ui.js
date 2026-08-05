@@ -76,6 +76,10 @@ const UI = {
     this.els.throwBtn.classList.toggle('hidden', !visible);
   },
 
+  setThrowButtonPrimed(primed) {
+    this.els.throwBtn.classList.toggle('primed', primed);
+  },
+
   toast(message, duration = 2600) {
     const el = this.els.toast;
     el.textContent = message;

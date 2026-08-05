@@ -126,6 +126,15 @@ function getAvailableAction() {
     }
   }
 
+  // Purely informational — throwing itself is bound to a separate key/button
+  // (F / 🥿, not E) so this must never take priority over a real [E] action.
+  if (G.bird.active && RandomEvents.type === 'bird' && dist(p, G.bird) < THROW_RANGE) {
+    const label = G.bird.phase === 'in'
+      ? '🥿 In range — throw now to stop the grab! (F)'
+      : '🥿 In range — throw to knock the tissue loose! (F)';
+    return { type: 'hint', label };
+  }
+
   return null;
 }
 
@@ -195,7 +204,7 @@ function updateGroundTissues(dtMs) {
 
 function onTelegraph(type, table) {
   if (type === 'wind') UI.toast(`💨 The wind is picking up near table #${table.id + 1}...`, 1200);
-  else if (type === 'bird') UI.toast(`🐦 A bird is eyeing table #${table.id + 1}...`, 1200);
+  else if (type === 'bird') UI.toast(`🕊️ A pigeon is eyeing table #${table.id + 1}! Get close and throw a shoe (F / 🥿)!`, 1800);
   else UI.toast(`🐈 A cat is eyeing table #${table.id + 1}'s tissue...`, 1200);
 }
 
@@ -214,7 +223,7 @@ function onTissueLost(table, type) {
   UI.setTableIndicator(G.player.reservedTableId);
 
   const label = type === 'wind' ? '💨 Wind blew your tissue off'
-    : type === 'bird' ? '🐦 A bird stole your tissue from'
+    : type === 'bird' ? '🕊️ A pigeon stole your tissue from'
     : '🐈 A cat snatched the tissue from';
   UI.toast(`${label} table #${table.id + 1}!`);
 
@@ -350,6 +359,7 @@ function syncHud() {
   const birdEventActive = G.bird.active && RandomEvents.type === 'bird';
   UI.setThrowButtonVisible(birdEventActive);
   UI.setThrowIndicator(birdEventActive ? G.bird.throwsRemaining : null);
+  UI.setThrowButtonPrimed(birdEventActive && dist(G.player, G.bird) < THROW_RANGE);
 
   UI.setStress(G.stress);
 }

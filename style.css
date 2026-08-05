@@ -247,6 +247,15 @@ html, body {
   background: rgba(217, 80, 63, 0.85);
 }
 
+.action-btn.primed {
+  animation: throw-primed-pulse 0.7s ease-in-out infinite;
+}
+
+@keyframes throw-primed-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 209, 102, 0); }
+}
+
 /* ---------- Screens ---------- */
 
 .screen {
