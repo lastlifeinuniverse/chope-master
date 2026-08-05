@@ -17,6 +17,7 @@ const BIRD_SPEED_SLOW = 1.0; // px/frame, slower than NPC_SPEED so it's trackabl
 const THROW_RANGE = 180;
 const THROW_COOLDOWN_MS = 500;
 const SHOE_FLIGHT_MS = 250; // purely visual — hit/miss is resolved instantly, this just animates it
+const BIRD_HIT_FLEE_SPEED = 2.5; // px/frame — startled flight after a hit, faster than the normal approach
 
 const TISSUE_START_COUNT = 3;
 const TABLE_COUNT = 5;
@@ -74,7 +75,7 @@ const CAT_HIDEOUT_POSITIONS = [
 ];
 const CAT_FLEE_RADIUS = 160; // player proximity that triggers evasive movement
 const CAT_FLEE_SPEED = 2.8; // px/frame while actively evading (faster than calm CAT_SPEED)
-const CAT_GIVEUP_MS = 7000; // total time fleeing before it drops the tissue and bolts
+const CAT_GIVEUP_MS = 10500; // total time fleeing before it drops the tissue and bolts (bumped 50% from 7000 to give a sustained chase a realistic chance)
 
 const EAT_DURATION_MS = 4500; // also scaled 1.5x, see food order timing note above
 

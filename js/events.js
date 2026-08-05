@@ -53,7 +53,10 @@ const RandomEvents = {
   startWindOrBird(table, bird, onTelegraph) {
     this.active = true;
     this.targetTable = table;
-    this.type = Math.random() < 0.5 ? 'wind' : 'bird';
+    // If a previously-hit bird is still finishing its exit flight, force
+    // wind instead — the bird entity is a single reused object, so starting
+    // a new bird event now would teleport the still-fleeing one mid-flight.
+    this.type = (Math.random() < 0.5 || bird.active) ? 'wind' : 'bird';
     this.t = 0;
 
     if (this.type === 'bird') {
@@ -143,14 +146,21 @@ const RandomEvents = {
   },
 
   // Called from the player's throw input, not from update() — a shoe hit
-  // ends the bird event immediately rather than waiting for its flight to
-  // finish. Returns whether the tissue had already been grabbed (so the
-  // caller knows whether to show "prevented the theft" vs "won it back").
+  // ends the bird *event* immediately (table/tissue outcome is fully decided
+  // right here) rather than waiting for its flight to finish. The bird
+  // itself doesn't vanish though — it keeps flying off-screen on its own
+  // (see updateFleeingBird() in game.js), independent of RandomEvents, so a
+  // new event is free to start while it's still finishing its exit.
+  // Returns whether the tissue had already been grabbed (so the caller
+  // knows whether to show "prevented the theft" vs "won it back").
   hitBird(bird, dropTissue) {
     if (this.type !== 'bird' || !bird.active) return null;
     const alreadyGrabbed = bird.phase === 'grab' || bird.phase === 'out';
-    bird.active = false;
     if (alreadyGrabbed && dropTissue) dropTissue(bird.x, bird.y);
+    bird.phase = 'out';
+    bird.exitX = bird.startX;
+    bird.exitY = bird.startY - 40;
+    bird.fleeingAfterHit = true;
     this.active = false;
     this.type = null;
     this.targetTable = null;

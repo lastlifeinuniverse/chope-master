@@ -218,6 +218,19 @@ function updateGroundTissues(dtMs) {
   G.groundTissues = G.groundTissues.filter((gt) => gt.timer > 0);
 }
 
+// A hit bird keeps flying off-screen on its own steam after the event
+// itself has already resolved (see RandomEvents.hitBird()) — this just
+// carries it the rest of the way out instead of having it vanish in place.
+function updateFleeingBird(dtMs) {
+  const bird = G.bird;
+  if (!bird.active || !bird.fleeingAfterHit) return;
+  const arrived = moveToward(bird, { x: bird.exitX, y: bird.exitY }, BIRD_HIT_FLEE_SPEED);
+  if (arrived) {
+    bird.active = false;
+    bird.fleeingAfterHit = false;
+  }
+}
+
 // ---------- Event callbacks ----------
 
 function onTelegraph(type, table) {
@@ -386,6 +399,7 @@ function update(dtMs) {
   updatePlayerMovement(dtMs);
   G.npcs.forEach((npc) => updateNpc(npc, dtMs, G.tables));
   RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatGiveUp, onCatEscaped, spawnGroundTissue);
+  updateFleeingBird(dtMs);
   updateGroundTissues(dtMs);
   if (G.thrownShoe) {
     G.thrownShoe.elapsed += dtMs;
@@ -437,8 +451,8 @@ function drawQueueArea() {
   ctx.lineTo(STALL.x, STALL.y + STALL.h / 2 - 10);
   ctx.stroke();
   ctx.restore();
-  drawEmoji(ctx, '🚧', QUEUE_SPOT.x - 60, QUEUE_SPOT.y + 40, 22);
-  drawEmoji(ctx, '🚧', QUEUE_SPOT.x, QUEUE_SPOT.y, 22);
+  drawEmoji(ctx, '🚧', QUEUE_SPOT.x - 60, QUEUE_SPOT.y + 40, 28);
+  drawEmoji(ctx, '🚧', QUEUE_SPOT.x, QUEUE_SPOT.y, 28);
 }
 
 function drawStall() {
@@ -452,7 +466,7 @@ function drawStall() {
   ctx.strokeRect(STALL.x - STALL.w / 2, STALL.y - STALL.h / 2 + 26, STALL.w, STALL.h - 26);
   ctx.restore();
 
-  drawEmoji(ctx, '🧑‍🍳', STALL.x, STALL.y - 6, 30);
+  drawEmoji(ctx, '🧑‍🍳', STALL.x, STALL.y - 6, 38);
 
   ctx.save();
   ctx.font = 'bold 12px sans-serif';
@@ -462,7 +476,7 @@ function drawStall() {
   ctx.restore();
 
   if (G.foodStatus === 'ready') {
-    drawEmoji(ctx, '❗', STALL.x + STALL.w / 2 - 6, STALL.y - STALL.h / 2, 22);
+    drawEmoji(ctx, '❗', STALL.x + STALL.w / 2 - 6, STALL.y - STALL.h / 2, 28);
   }
 }
 

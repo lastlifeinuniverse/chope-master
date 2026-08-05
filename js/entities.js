@@ -1,6 +1,6 @@
 // Entity factories, drawing, and (for simple NPCs) their behaviour.
 
-function drawEmoji(ctx, emoji, x, y, size = 28) {
+function drawEmoji(ctx, emoji, x, y, size = 35) {
   ctx.save();
   ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
   ctx.textAlign = 'center';
@@ -61,12 +61,12 @@ function drawTable(ctx, table, isPlayersTable) {
   if (table.state === 'reserved') {
     ctx.save();
     ctx.globalAlpha = clamp(table.tissueOpacity, 0, 1);
-    drawEmoji(ctx, '🧻', x + table.tissueOffset.x, y + table.tissueOffset.y, 24);
+    drawEmoji(ctx, '🧻', x + table.tissueOffset.x, y + table.tissueOffset.y, 30);
     ctx.restore();
   } else if (table.state === 'occupied_by_npc') {
-    drawEmoji(ctx, '🍲', x, y, 20);
+    drawEmoji(ctx, '🍲', x, y, 25);
   } else if (table.state === 'occupied_by_player') {
-    drawEmoji(ctx, '🍜', x, y, 20);
+    drawEmoji(ctx, '🍜', x, y, 25);
   }
 
   ctx.save();
@@ -132,11 +132,11 @@ function drawPlayer(ctx, player) {
     ctx.scale(-1, 1);
     ctx.translate(-x, 0);
   }
-  drawEmoji(ctx, displayEmoji, x, y - 1, 31);
+  drawEmoji(ctx, displayEmoji, x, y - 1, 39);
   ctx.restore();
 
   if (player.carryingFood) {
-    drawEmoji(ctx, '🍜', x, y - 36, 26);
+    drawEmoji(ctx, '🍜', x, y - 36, 33);
   }
 
   if (player.sprinting && player.moving) {
@@ -251,7 +251,7 @@ function drawNpc(ctx, npc) {
   ctx.strokeStyle = '#4d6a94';
   ctx.lineWidth = 2;
   ctx.stroke();
-  drawEmoji(ctx, '🙂', npc.x, npc.y + bobY - 1, 22);
+  drawEmoji(ctx, '🙂', npc.x, npc.y + bobY - 1, 28);
   ctx.restore();
 }
 
@@ -271,6 +271,7 @@ function createBird() {
     t: 0,
     throwsRemaining: 0,
     throwCooldown: 0,
+    fleeingAfterHit: false, // still flying off-screen after a shoe hit, independent of RandomEvents
   };
 }
 
@@ -279,7 +280,7 @@ function drawBird(ctx, bird) {
   ctx.save();
   ctx.translate(bird.x, bird.y);
   if (bird.phase === 'out') ctx.scale(-1, 1);
-  drawEmoji(ctx, '🕊️', 0, 0, 26);
+  drawEmoji(ctx, '🕊️', 0, 0, 33);
   ctx.restore();
 }
 
@@ -294,7 +295,7 @@ function drawThrownShoe(ctx, shoe) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(t * Math.PI * 1.5);
-  drawEmoji(ctx, '🥿', 0, 0, 18);
+  drawEmoji(ctx, '🥿', 0, 0, 23);
   ctx.restore();
 }
 
@@ -324,10 +325,10 @@ function drawCat(ctx, cat) {
   ctx.fill();
   ctx.restore();
 
-  drawEmoji(ctx, '🐈', cat.x, cat.y, 28);
+  drawEmoji(ctx, '🐈', cat.x, cat.y, 35);
 
   if (cat.state === 'fleeing') {
-    drawEmoji(ctx, '🧻', cat.x + 18, cat.y - 18, 18);
+    drawEmoji(ctx, '🧻', cat.x + 18, cat.y - 18, 23);
   }
 }
 
@@ -355,6 +356,6 @@ function drawGroundTissue(ctx, gt) {
 
   ctx.save();
   ctx.globalAlpha = remainingFrac < 0.2 ? 0.35 + Math.abs(Math.sin(Date.now() / 110)) * 0.65 : 1;
-  drawEmoji(ctx, '🧻', gt.x, gt.y, 24);
+  drawEmoji(ctx, '🧻', gt.x, gt.y, 30);
   ctx.restore();
 }
