@@ -198,7 +198,7 @@ function triggerLose(key, message) {
 function winGame() {
   G.phase = 'win';
   const timeSec = ((performance.now() - G.levelStartTime) / 1000).toFixed(1);
-  UI.showWin({ timeSec, tissueUsed: G.tissueUsedCount, closeCalls: G.closeCalls });
+  UI.showWin({ timeSec, tissueUsed: G.tissueUsedCount, closeCalls: G.closeCalls, characterName: G.player.character.name });
 }
 
 // ---------- Per-frame updates ----------

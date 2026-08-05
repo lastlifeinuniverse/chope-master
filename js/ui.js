@@ -97,6 +97,7 @@ const UI = {
 
   showWin(stats) {
     this.hideAllScreens();
+    document.getElementById('win-message').textContent = `${stats.characterName} enjoyed their meal in peace.`;
     this.els.winStats.innerHTML = `
       <div>⏱️ Meal finished in <strong>${stats.timeSec}s</strong></div>
       <div>🧻 Tissue packets used: <strong>${stats.tissueUsed}</strong></div>
