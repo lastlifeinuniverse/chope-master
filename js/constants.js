@@ -16,6 +16,7 @@ const INTERACT_RANGE = 46;
 const BIRD_SPEED_SLOW = 1.0; // px/frame, slower than NPC_SPEED so it's trackable
 const THROW_RANGE = 180;
 const THROW_COOLDOWN_MS = 500;
+const SHOE_FLIGHT_MS = 250; // purely visual — hit/miss is resolved instantly, this just animates it
 
 const TISSUE_START_COUNT = 3;
 const TABLE_COUNT = 5;

@@ -283,6 +283,21 @@ function drawBird(ctx, bird) {
   ctx.restore();
 }
 
+// ---------- Thrown shoe (visual only — hit/miss is already resolved by the
+// time this exists; it just animates the throw that already happened) ----------
+
+function drawThrownShoe(ctx, shoe) {
+  const t = clamp(shoe.elapsed / SHOE_FLIGHT_MS, 0, 1);
+  const x = lerp(shoe.startX, shoe.endX, t);
+  const arc = Math.sin(t * Math.PI) * 22; // small upward hop for a "thrown" feel
+  const y = lerp(shoe.startY, shoe.endY, t) - arc;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(t * Math.PI * 1.5);
+  drawEmoji(ctx, '🥿', 0, 0, 18);
+  ctx.restore();
+}
+
 // ---------- Cat (random event actor) ----------
 
 function createCat() {

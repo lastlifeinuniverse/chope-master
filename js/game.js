@@ -18,6 +18,7 @@ function initGame(character) {
   G.cat = createCat();
   G.groundTissues = [];
   G.nextGroundTissueId = 0;
+  G.thrownShoe = null;
 
   G.tissueCount = character.tissues;
   G.tissueUsedCount = 0;
@@ -150,6 +151,16 @@ function handleInteract() {
 
 // ---------- Throw (bird event only) ----------
 
+function throwShoeAt(targetX, targetY) {
+  G.thrownShoe = {
+    startX: G.player.x,
+    startY: G.player.y - 20,
+    endX: targetX,
+    endY: targetY,
+    elapsed: 0,
+  };
+}
+
 function handleThrow() {
   const bird = G.bird;
   if (!bird.active || RandomEvents.type !== 'bird') return;
@@ -159,11 +170,18 @@ function handleThrow() {
   bird.throwCooldown = THROW_COOLDOWN_MS;
   UI.setThrowIndicator(bird.throwsRemaining > 0 ? bird.throwsRemaining : null);
 
-  if (dist(G.player, bird) > THROW_RANGE) {
+  const d = dist(G.player, bird);
+  if (d > THROW_RANGE) {
+    // Out of range — the shoe visibly flies toward the bird but falls short,
+    // landing at max throw distance rather than teleporting to a miss.
+    const dx = (bird.x - G.player.x) / d;
+    const dy = (bird.y - G.player.y) / d;
+    throwShoeAt(G.player.x + dx * THROW_RANGE, G.player.y + dy * THROW_RANGE);
     UI.toast('🥿 Missed!', 1000);
     return;
   }
 
+  throwShoeAt(bird.x, bird.y);
   const alreadyGrabbed = RandomEvents.hitBird(bird, spawnGroundTissue);
   UI.setThrowIndicator(null);
   if (alreadyGrabbed) {
@@ -369,6 +387,10 @@ function update(dtMs) {
   G.npcs.forEach((npc) => updateNpc(npc, dtMs, G.tables));
   RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatGiveUp, onCatEscaped, spawnGroundTissue);
   updateGroundTissues(dtMs);
+  if (G.thrownShoe) {
+    G.thrownShoe.elapsed += dtMs;
+    if (G.thrownShoe.elapsed >= SHOE_FLIGHT_MS) G.thrownShoe = null;
+  }
   updateFoodTimer(dtMs);
   updateGrace(dtMs);
   updateEating(dtMs);
@@ -461,6 +483,7 @@ function draw() {
   drawables.forEach((d) => d.fn());
 
   drawBird(ctx, G.bird);
+  if (G.thrownShoe) drawThrownShoe(ctx, G.thrownShoe);
   RandomEvents.draw(ctx);
 }
 
