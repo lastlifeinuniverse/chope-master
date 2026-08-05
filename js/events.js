@@ -1,8 +1,8 @@
 // Random events that threaten a chope'd tissue packet: wind, birds, and cats.
 // Only one event is ever active at a time (per MVP spec). Wind/bird share one
 // check timer + chance roll; the cat is rolled independently (its own
-// CAT_CHANCE) but still gated by the same `active` mutex so it never overlaps
-// a wind/bird event (or another cat event).
+// CAT_EVENT_CHANCE) but still gated by the same `active` mutex so it never
+// overlaps a wind/bird event (or another cat event).
 
 const RandomEvents = {
   checkTimer: EVENT_CHECK_MS,
@@ -21,7 +21,7 @@ const RandomEvents = {
     this.t = 0;
   },
 
-  update(dtMs, tables, player, bird, cat, onTissueLost, onTelegraph, onCatRetrieved, onCatEscaped) {
+  update(dtMs, tables, player, bird, cat, onTissueLost, onTelegraph, onCatGiveUp, onCatEscaped, dropTissue) {
     if (!this.active) {
       this.checkTimer -= dtMs;
       this.catCheckTimer -= dtMs;
@@ -37,7 +37,7 @@ const RandomEvents = {
       if (!this.active && this.catCheckTimer <= 0) {
         this.catCheckTimer = EVENT_CHECK_MS;
         const reserved = tables.filter((t) => t.state === 'reserved');
-        if (reserved.length > 0 && Math.random() < CAT_CHANCE) {
+        if (reserved.length > 0 && Math.random() < CAT_EVENT_CHANCE) {
           this.startCat(choice(reserved), cat, onTelegraph);
         }
       }
@@ -45,9 +45,9 @@ const RandomEvents = {
     }
 
     this.t += dtMs;
-    if (this.type === 'wind') this.updateWind(onTissueLost);
-    else if (this.type === 'bird') this.updateBird(bird, onTissueLost);
-    else if (this.type === 'cat') this.updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved, onCatEscaped);
+    if (this.type === 'wind') this.updateWind(onTissueLost, dropTissue);
+    else if (this.type === 'bird') this.updateBird(dtMs, bird, onTissueLost);
+    else if (this.type === 'cat') this.updateCat(dtMs, cat, player, onTissueLost, onCatGiveUp, onCatEscaped, dropTissue);
   },
 
   startWindOrBird(table, bird, onTelegraph) {
@@ -64,12 +64,14 @@ const RandomEvents = {
       bird.x = bird.startX;
       bird.y = bird.startY;
       bird.targetTableId = table.id;
+      bird.throwsRemaining = 2;
+      bird.throwCooldown = 0;
     }
 
     if (onTelegraph) onTelegraph(this.type, table);
   },
 
-  updateWind(onTissueLost) {
+  updateWind(onTissueLost, dropTissue) {
     const table = this.targetTable;
     const WARN = EVENT_WARNING_MS;
     const BLOW = 1300;
@@ -84,20 +86,25 @@ const RandomEvents = {
     table.tissueOffset.y = lerp(0, -30, t);
     table.tissueOpacity = 1 - t;
 
-    if (t >= 1) this.finishLoss(table, 'wind', onTissueLost);
+    if (t >= 1) {
+      // Land it where the animation actually blew it to, before finishLoss()
+      // resets tissueOffset back to {0,0}.
+      const landX = table.x + table.tissueOffset.x;
+      const landY = table.y + table.tissueOffset.y;
+      this.finishLoss(table, 'wind', onTissueLost);
+      if (dropTissue) dropTissue(landX, landY);
+    }
   },
 
-  updateBird(bird, onTissueLost) {
+  updateBird(dtMs, bird, onTissueLost) {
     const table = this.targetTable;
-    const FLY_IN = 650;
     const GRAB = 450;
-    const FLY_OUT = 650;
+
+    if (bird.throwCooldown > 0) bird.throwCooldown -= dtMs;
 
     if (bird.phase === 'in') {
-      const t = clamp(this.t / FLY_IN, 0, 1);
-      bird.x = lerp(bird.startX, table.x + 20, t);
-      bird.y = lerp(bird.startY, table.y - 18, t);
-      if (t >= 1) {
+      const arrived = moveToward(bird, { x: table.x + 20, y: table.y - 18 }, BIRD_SPEED_SLOW);
+      if (arrived) {
         bird.phase = 'grab';
         this.t = 0;
       }
@@ -105,24 +112,49 @@ const RandomEvents = {
     }
 
     if (bird.phase === 'grab') {
-      const t = clamp(this.t / GRAB, 0, 1);
-      table.tissueOpacity = 1 - t;
-      if (t >= 1) {
+      // this.t is already accumulated by the caller in update(); don't
+      // double-increment here, or GRAB finishes in half the intended time.
+      table.tissueOpacity = clamp(1 - this.t / GRAB, 0, 1);
+      if (this.t >= GRAB) {
+        // Same immediate-loss pattern as wind/cat: the table's fate is
+        // decided the instant the grab finishes, not when the bird finally
+        // gets offscreen. A shoe hit during 'out' only wins back the
+        // tissue packet (via ground-tissue drop), not the table.
+        table.state = 'empty';
+        table.tissueOffset = { x: 0, y: 0 };
+        table.tissueOpacity = 1;
         bird.phase = 'out';
-        this.t = 0;
+        bird.exitX = bird.startX;
+        bird.exitY = bird.startY - 40;
+        if (onTissueLost) onTissueLost(table, 'bird');
       }
       return;
     }
 
     if (bird.phase === 'out') {
-      const t = clamp(this.t / FLY_OUT, 0, 1);
-      bird.x = lerp(table.x + 20, bird.startX, t);
-      bird.y = lerp(table.y - 18, bird.startY - 40, t);
-      if (t >= 1) {
+      const arrived = moveToward(bird, { x: bird.exitX, y: bird.exitY }, BIRD_SPEED_SLOW);
+      if (arrived) {
         bird.active = false;
-        this.finishLoss(table, 'bird', onTissueLost);
+        this.active = false;
+        this.type = null;
+        this.targetTable = null;
       }
     }
+  },
+
+  // Called from the player's throw input, not from update() — a shoe hit
+  // ends the bird event immediately rather than waiting for its flight to
+  // finish. Returns whether the tissue had already been grabbed (so the
+  // caller knows whether to show "prevented the theft" vs "won it back").
+  hitBird(bird, dropTissue) {
+    if (this.type !== 'bird' || !bird.active) return null;
+    const alreadyGrabbed = bird.phase === 'grab' || bird.phase === 'out';
+    bird.active = false;
+    if (alreadyGrabbed && dropTissue) dropTissue(bird.x, bird.y);
+    this.active = false;
+    this.type = null;
+    this.targetTable = null;
+    return alreadyGrabbed;
   },
 
   startCat(table, cat, onTelegraph) {
@@ -138,13 +170,12 @@ const RandomEvents = {
     cat.targetTableId = table.id;
     cat.hideout = choice(CAT_HIDEOUT_POSITIONS);
     cat.t = 0;
-    cat.windowTimer = 0;
-    cat.holdTimer = 0;
+    cat.giveupTimer = 0;
 
     if (onTelegraph) onTelegraph('cat', table);
   },
 
-  updateCat(dtMs, cat, player, onTissueLost, onCatRetrieved, onCatEscaped) {
+  updateCat(dtMs, cat, player, onTissueLost, onCatGiveUp, onCatEscaped, dropTissue) {
     const table = this.targetTable;
 
     if (cat.state === 'approaching') {
@@ -160,64 +191,63 @@ const RandomEvents = {
       cat.t += dtMs;
       table.tissueOpacity = clamp(1 - cat.t / CAT_GRAB_MS, 0, 1);
       if (cat.t >= CAT_GRAB_MS) {
-        // The steal is real the instant the cat has it — same immediate
-        // consequence as a successful wind/bird hit (table opens up, grace
-        // period starts). Chasing the cat down doesn't undo the table loss;
-        // it only wins back the tissue *packet* for later use.
+        // Same immediate-loss pattern as wind/bird: the table's fate is
+        // decided the instant the grab finishes. Chasing the cat down from
+        // here doesn't undo that — it only wins back the tissue *packet*.
         table.state = 'empty';
         table.tissueOffset = { x: 0, y: 0 };
         table.tissueOpacity = 1;
         cat.state = 'fleeing';
+        cat.giveupTimer = 0;
         if (onTissueLost) onTissueLost(table, 'cat');
       }
       return;
     }
 
     if (cat.state === 'fleeing') {
-      // Retrieval window starts once the cat actually settles at its hideout,
-      // not from when it starts running — flee duration varies with distance
-      // and framerate, and starting the clock earlier could burn away the
-      // player's whole window before the cat is even catchable.
-      const arrived = moveToward(cat, cat.hideout, CAT_SPEED);
-      if (arrived) {
-        cat.state = 'stopped_with_tissue';
-        cat.windowTimer = CAT_RETRIEVAL_WINDOW_MS;
-      }
-      return;
-    }
-
-    // stopped_with_tissue and retrieving share the retrieval-window countdown.
-    // The table's fate was already decided at grab time above, so a timeout
-    // here just means the packet itself is gone for good — no further table
-    // consequence, hence no onTissueLost() call this time.
-    cat.windowTimer -= dtMs;
-    if (cat.windowTimer <= 0) {
-      cat.active = false;
-      cat.state = 'idle';
-      this.active = false;
-      this.type = null;
-      this.targetTable = null;
-      if (onCatEscaped) onCatEscaped(table);
-      return;
-    }
-
-    if (cat.state === 'retrieving') {
-      if (dist(player, cat) >= INTERACT_RANGE) {
-        // wandered off mid-retrieval — must walk back and start again
-        cat.state = 'stopped_with_tissue';
-        return;
-      }
-      cat.holdTimer -= dtMs;
-      if (cat.holdTimer <= 0) {
+      cat.giveupTimer += dtMs;
+      if (cat.giveupTimer >= CAT_GIVEUP_MS) {
         cat.active = false;
         cat.state = 'idle';
         this.active = false;
         this.type = null;
         this.targetTable = null;
-        if (onCatRetrieved) onCatRetrieved(table);
+        if (dropTissue) dropTissue(cat.x, cat.y);
+        if (onCatGiveUp) onCatGiveUp(table);
+        return;
+      }
+
+      const toHideout = dist(cat, cat.hideout);
+      if (toHideout <= CAT_SPEED) {
+        // Reached the hideout before giving up — gone for good, no drop.
+        cat.active = false;
+        cat.state = 'idle';
+        this.active = false;
+        this.type = null;
+        this.targetTable = null;
+        if (onCatEscaped) onCatEscaped(table);
+        return;
+      }
+      const hdx = (cat.hideout.x - cat.x) / toHideout;
+      const hdy = (cat.hideout.y - cat.y) / toHideout;
+
+      const toPlayer = dist(cat, player);
+      if (toPlayer < CAT_FLEE_RADIUS) {
+        // Evade: blend "away from player" with "toward hideout" so it's
+        // always making some net progress rather than treadmilling forever
+        // if the player just trails directly behind it.
+        const adx = toPlayer > 0 ? (cat.x - player.x) / toPlayer : 1;
+        const ady = toPlayer > 0 ? (cat.y - player.y) / toPlayer : 0;
+        const dx = adx * 0.6 + hdx * 0.4;
+        const dy = ady * 0.6 + hdy * 0.4;
+        const len = Math.hypot(dx, dy) || 1;
+        cat.x = clamp(cat.x + (dx / len) * CAT_FLEE_SPEED, 20, CANVAS_W - 20);
+        cat.y = clamp(cat.y + (dy / len) * CAT_FLEE_SPEED, 20, CANVAS_H - 20);
+      } else {
+        cat.x += hdx * CAT_SPEED;
+        cat.y += hdy * CAT_SPEED;
       }
     }
-    // stopped_with_tissue: just waiting for the player to walk up and interact
   },
 
   finishLoss(table, type, onTissueLost) {

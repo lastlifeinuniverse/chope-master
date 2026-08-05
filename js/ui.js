@@ -15,6 +15,8 @@ const UI = {
       prompt: document.getElementById('interact-prompt'),
       actionTimerWrap: document.getElementById('action-timer-wrap'),
       actionTimerFill: document.getElementById('action-timer-fill'),
+      throwIndicator: document.getElementById('throw-indicator'),
+      throwBtn: document.getElementById('btn-throw'),
       screens: {
         charSelect: document.getElementById('screen-char-select'),
         start: document.getElementById('screen-start'),
@@ -59,6 +61,19 @@ const UI = {
     this.els.actionTimerWrap.classList.remove('hidden');
     this.els.actionTimerFill.style.width = `${clamp(fraction, 0, 1) * 100}%`;
     this.els.actionTimerFill.classList.toggle('urgent', !!urgent);
+  },
+
+  setThrowIndicator(remaining) {
+    if (remaining === null || remaining === undefined) {
+      this.els.throwIndicator.classList.add('hidden');
+      return;
+    }
+    this.els.throwIndicator.textContent = `🥿 x${remaining}`;
+    this.els.throwIndicator.classList.remove('hidden');
+  },
+
+  setThrowButtonVisible(visible) {
+    this.els.throwBtn.classList.toggle('hidden', !visible);
   },
 
   toast(message, duration = 2600) {

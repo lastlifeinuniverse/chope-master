@@ -1,5 +1,7 @@
 // Chope Master — tunable constants. Change these to rebalance the game.
 
+const GAME_VERSION = '1.3.0';
+
 const CANVAS_W = 960;
 const CANVAS_H = 600;
 
@@ -9,6 +11,12 @@ const NPC_SPEED = 1.1;
 
 const INTERACT_RANGE = 46;
 
+// Bird shoe-throw mechanic — bird flies slowly enough to track and react to;
+// player gets 2 throws to knock the tissue loose before it gets away clean.
+const BIRD_SPEED_SLOW = 1.0; // px/frame, slower than NPC_SPEED so it's trackable
+const THROW_RANGE = 180;
+const THROW_COOLDOWN_MS = 500;
+
 const TISSUE_START_COUNT = 3;
 const TABLE_COUNT = 5;
 
@@ -17,11 +25,23 @@ const EVENT_CHECK_MS = 3200;
 const EVENT_CHANCE = 0.30;
 const EVENT_WARNING_MS = 900; // brief telegraph before the event actually hits
 
-// Food order timing
-const QUEUE_WAIT_MS = [1000, 2200];
-const PREP_TIME_MS = [7000, 12000];
-const COLLECTION_TIMER_MS = 9000; // must collect once ready before it's abandoned
-const CARRY_TIMER_MS = 14000; // must deliver once carrying before it's abandoned
+// Ground tissue — dropped by wind/bird/cat, walk up + interact to reclaim it.
+// Multiple instances can exist at once (an array, not a single object) since
+// events can now overlap over a longer round.
+const TISSUE_DESPAWN_MS = 9000;
+const TISSUE_LAND_MARGIN = 24; // matches the player's own canvas-edge clamp
+const TISSUE_LAND_CLEARANCE = 55; // keeps landing spot clear of a table's footprint
+
+// Food order timing — scaled 1.5x from v1.2 values (1000/2200, 7000/12000,
+// 9000, 14000) to lengthen the round so wind/bird/cat events get more
+// chances to trigger and interleave per playthrough. 1.5x is a starting
+// guess, not a tuned value — revisit after playtesting; EVENT_CHECK_MS/
+// EVENT_CHANCE deliberately weren't scaled alongside it, so a longer round
+// means more event occurrences rather than denser ones per minute.
+const QUEUE_WAIT_MS = [1500, 3300];
+const PREP_TIME_MS = [10500, 18000];
+const COLLECTION_TIMER_MS = 13500; // must collect once ready before it's abandoned
+const CARRY_TIMER_MS = 21000; // must deliver once carrying before it's abandoned
 
 // If tissue is lost, player has this long to re-chope before a table is up for grabs
 const TABLE_GRACE_MS = 8000;
@@ -31,23 +51,31 @@ const NPC_COUNT = 2;
 const NPC_SIT_MS = [9000, 16000];
 const NPC_RETARGET_MS = 4000;
 
-// Cat event — sneaks up on a reserved table, steals the tissue, and flees to
-// a hideout. Player can chase it down and hold position nearby to get it
-// back before the retrieval window runs out. Rolled independently from the
-// wind/bird pool (own CAT_CHANCE) but reuses EVENT_CHECK_MS as its cadence
-// and shares the same "only one event active at a time" mutex.
-const CAT_SPEED = 2.6; // px/frame, ground movement (unscaled, matches NPC_SPEED style)
-const CAT_CHANCE = 0.22;
+// Cat event — sneaks up on a reserved table and steals the tissue (same
+// immediate table-loss consequence as wind/bird: grace period starts right
+// away). Then it's a chase: staying close forces it into evasive movement
+// away from the player, blended with its own drive toward a hideout. Corner
+// it long enough (CAT_GIVEUP_MS of total flee time) and it drops the tissue
+// on the ground — same shared pickup as a wind drop. Let it reach the
+// hideout first and the tissue's gone for good, no ground drop.
+// Rolled independently from the wind/bird pool (own CAT_EVENT_CHANCE) but
+// reuses EVENT_CHECK_MS as its cadence and shares the "only one event
+// active at a time" mutex. Default is roughly half the effective bird rate
+// (EVENT_CHANCE * 0.5 for bird alone) since a chase is a bigger time
+// investment than dodging wind/bird — flag as tunable.
+const CAT_SPEED = 2.6; // px/frame, calm travel speed (unpressured approach / unchased flee)
+const CAT_EVENT_CHANCE = 0.075;
 const CAT_GRAB_MS = 500; // pause at the table while the tissue fades out
 const CAT_HIDEOUT_POSITIONS = [
   { x: 60, y: 560 },
   { x: 900, y: 560 },
   { x: 480, y: 40 },
 ];
-const CAT_RETRIEVAL_HOLD_MS = 2200; // must stay next to the cat this long to retrieve it
-const CAT_RETRIEVAL_WINDOW_MS = 11000; // total time the cat holds the tissue before it's gone for good
+const CAT_FLEE_RADIUS = 160; // player proximity that triggers evasive movement
+const CAT_FLEE_SPEED = 2.8; // px/frame while actively evading (faster than calm CAT_SPEED)
+const CAT_GIVEUP_MS = 7000; // total time fleeing before it drops the tissue and bolts
 
-const EAT_DURATION_MS = 3000;
+const EAT_DURATION_MS = 4500; // also scaled 1.5x, see food order timing note above
 
 const TABLE_POSITIONS = [
   { x: 250, y: 190 },

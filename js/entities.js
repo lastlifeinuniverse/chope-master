@@ -264,9 +264,13 @@ function createBird() {
     y: 0,
     startX: 0,
     startY: 0,
+    exitX: 0,
+    exitY: 0,
     targetTableId: null,
     phase: 'in', // in | grab | out
     t: 0,
+    throwsRemaining: 0,
+    throwCooldown: 0,
   };
 }
 
@@ -286,13 +290,12 @@ function createCat() {
     active: false,
     x: 0,
     y: 0,
-    // idle | approaching | grabbing | fleeing | stopped_with_tissue | retrieving
+    // idle | approaching | grabbing | fleeing
     state: 'idle',
     targetTableId: null,
     hideout: null,
     t: 0, // phase-local timer (grab animation)
-    windowTimer: 0, // ms left before the tissue is lost for good
-    holdTimer: 0, // ms left for the player to complete retrieval
+    giveupTimer: 0, // ms spent fleeing so far — hits CAT_GIVEUP_MS and it drops the tissue
   };
 }
 
@@ -308,7 +311,35 @@ function drawCat(ctx, cat) {
 
   drawEmoji(ctx, '🐈', cat.x, cat.y, 28);
 
-  if (cat.state === 'stopped_with_tissue' || cat.state === 'retrieving') {
+  if (cat.state === 'fleeing') {
     drawEmoji(ctx, '🧻', cat.x + 18, cat.y - 18, 18);
   }
+}
+
+// ---------- Ground tissue (dropped by wind/bird/cat, walk up + interact) ----------
+
+function createGroundTissue(id, x, y) {
+  return {
+    id,
+    x,
+    y,
+    timer: TISSUE_DESPAWN_MS,
+    warned: false, // edge-triggered flag so the despawn-warning toast fires once
+  };
+}
+
+function drawGroundTissue(ctx, gt) {
+  const remainingFrac = gt.timer / TISSUE_DESPAWN_MS;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath();
+  ctx.ellipse(gt.x, gt.y + 9, 12, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = remainingFrac < 0.2 ? 0.35 + Math.abs(Math.sin(Date.now() / 110)) * 0.65 : 1;
+  drawEmoji(ctx, '🧻', gt.x, gt.y, 24);
+  ctx.restore();
 }

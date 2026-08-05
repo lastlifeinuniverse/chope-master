@@ -45,3 +45,19 @@ function moveToward(pos, target, speed) {
 function fmtSeconds(ms) {
   return Math.max(0, ms / 1000).toFixed(1);
 }
+
+function clampToWalkable(x, y, tables) {
+  let cx = clamp(x, TISSUE_LAND_MARGIN, CANVAS_W - TISSUE_LAND_MARGIN);
+  let cy = clamp(y, TISSUE_LAND_MARGIN, CANVAS_H - TISSUE_LAND_MARGIN);
+
+  tables.forEach((table) => {
+    const d = dist({ x: cx, y: cy }, table);
+    if (d < TISSUE_LAND_CLEARANCE) {
+      const angle = d === 0 ? 0 : Math.atan2(cy - table.y, cx - table.x);
+      cx = clamp(table.x + Math.cos(angle) * TISSUE_LAND_CLEARANCE, TISSUE_LAND_MARGIN, CANVAS_W - TISSUE_LAND_MARGIN);
+      cy = clamp(table.y + Math.sin(angle) * TISSUE_LAND_CLEARANCE, TISSUE_LAND_MARGIN, CANVAS_H - TISSUE_LAND_MARGIN);
+    }
+  });
+
+  return { x: cx, y: cy };
+}

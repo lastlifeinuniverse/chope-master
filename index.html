@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Chope Master</title>
-<link rel="stylesheet" href="style.css?v=20260804c" />
+<link rel="stylesheet" href="style.css?v=20260805d" />
 </head>
 <body>
 
@@ -34,6 +34,7 @@
     <div id="action-timer-wrap" class="hidden"><div id="action-timer-fill"></div></div>
     <div id="interact-prompt" class="hidden"></div>
     <div id="toast" class="hidden"></div>
+    <div id="throw-indicator" class="hidden"></div>
 
     <div id="touch-controls">
       <div id="dpad">
@@ -44,6 +45,7 @@
       </div>
       <div id="action-buttons">
         <button id="btn-sprint" class="action-btn" aria-label="Sprint">SPRINT</button>
+        <button id="btn-throw" class="action-btn hidden" aria-label="Throw shoe">🥿</button>
         <button id="btn-interact" class="action-btn primary" aria-label="Interact">E</button>
       </div>
     </div>
@@ -93,6 +95,7 @@
         </ol>
         <p class="controls-hint">Move: <kbd>WASD</kbd>/<kbd>Arrows</kbd> &nbsp; Sprint: <kbd>Shift</kbd> &nbsp; Interact: <kbd>E</kbd></p>
         <button id="btn-start" class="btn-primary">Choose Character</button>
+        <span class="version-tag">v<span class="game-version"></span></span>
       </div>
     </div>
 
@@ -102,6 +105,7 @@
         <p id="win-message"></p>
         <div id="win-stats" class="stats"></div>
         <button id="btn-play-again" class="btn-primary">Play Again</button>
+        <span class="version-tag">v<span class="game-version"></span></span>
       </div>
     </div>
 
@@ -110,6 +114,7 @@
         <h1>😭 Game Over</h1>
         <p id="lose-reason"></p>
         <button id="btn-try-again" class="btn-primary">Try Again</button>
+        <span class="version-tag">v<span class="game-version"></span></span>
       </div>
     </div>
   </div>
@@ -117,11 +122,11 @@
   <p class="footer-hint">Chope Master — MVP prototype</p>
 </div>
 
-<script src="js/constants.js?v=20260804c"></script>
-<script src="js/utils.js?v=20260804c"></script>
-<script src="js/entities.js?v=20260804c"></script>
-<script src="js/events.js?v=20260804c"></script>
-<script src="js/ui.js?v=20260804c"></script>
-<script src="js/game.js?v=20260804c"></script>
+<script src="js/constants.js?v=20260805d"></script>
+<script src="js/utils.js?v=20260805d"></script>
+<script src="js/entities.js?v=20260805d"></script>
+<script src="js/events.js?v=20260805d"></script>
+<script src="js/ui.js?v=20260805d"></script>
+<script src="js/game.js?v=20260805d"></script>
 </body>
 </html>

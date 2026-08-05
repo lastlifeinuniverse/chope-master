@@ -3,7 +3,7 @@
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
-const Input = { up: false, down: false, left: false, right: false, sprint: false, interactQueue: false };
+const Input = { up: false, down: false, left: false, right: false, sprint: false, interactQueue: false, throwQueue: false };
 
 const G = {}; // mutable game state, populated by initGame()
 
@@ -16,6 +16,8 @@ function initGame(character) {
   G.npcs = Array.from({ length: NPC_COUNT }, (_, i) => createNpc(i));
   G.bird = createBird();
   G.cat = createCat();
+  G.groundTissues = [];
+  G.nextGroundTissueId = 0;
 
   G.tissueCount = character.tissues;
   G.tissueUsedCount = 0;
@@ -93,11 +95,9 @@ function sitAndEat(table) {
 function getAvailableAction() {
   const p = G.player;
 
-  if (G.cat.active && G.cat.state === 'stopped_with_tissue' && dist(p, G.cat) < INTERACT_RANGE) {
-    return { type: 'cat_retrieve', label: '[E] Get your tissue back from the cat!' };
-  }
-  if (G.cat.active && G.cat.state === 'retrieving' && dist(p, G.cat) < INTERACT_RANGE) {
-    return { type: 'hint', label: 'Hold on... getting tissue back!' };
+  const nearGroundTissue = G.groundTissues.find((gt) => dist(p, gt) < INTERACT_RANGE);
+  if (nearGroundTissue) {
+    return { type: 'collect_tissue', label: '[E] Pick up tissue packet', groundTissue: nearGroundTissue };
   }
 
   if (G.foodStatus === 'carrying') {
@@ -136,13 +136,59 @@ function handleInteract() {
   else if (action.type === 'queue') joinQueue();
   else if (action.type === 'collect') collectFood();
   else if (action.type === 'eat') sitAndEat(action.table);
-  else if (action.type === 'cat_retrieve') startCatRetrieval();
+  else if (action.type === 'collect_tissue') collectGroundTissue(action.groundTissue);
 }
 
-function startCatRetrieval() {
-  G.cat.state = 'retrieving';
-  G.cat.holdTimer = CAT_RETRIEVAL_HOLD_MS;
-  UI.toast('🐈 Hold still, getting your tissue back...', 1400);
+// ---------- Throw (bird event only) ----------
+
+function handleThrow() {
+  const bird = G.bird;
+  if (!bird.active || RandomEvents.type !== 'bird') return;
+  if (bird.throwsRemaining <= 0 || bird.throwCooldown > 0) return;
+
+  bird.throwsRemaining--;
+  bird.throwCooldown = THROW_COOLDOWN_MS;
+  UI.setThrowIndicator(bird.throwsRemaining > 0 ? bird.throwsRemaining : null);
+
+  if (dist(G.player, bird) > THROW_RANGE) {
+    UI.toast('🥿 Missed!', 1000);
+    return;
+  }
+
+  const alreadyGrabbed = RandomEvents.hitBird(bird, spawnGroundTissue);
+  UI.setThrowIndicator(null);
+  if (alreadyGrabbed) {
+    UI.toast('🥿 Nice shot! The bird dropped the tissue!');
+  } else {
+    UI.toast('🥿 Direct hit! Shooed it away before it could grab anything!');
+  }
+}
+
+// ---------- Ground tissue ----------
+
+function spawnGroundTissue(x, y) {
+  const landing = clampToWalkable(x, y, G.tables);
+  const gt = createGroundTissue(G.nextGroundTissueId++, landing.x, landing.y);
+  G.groundTissues.push(gt);
+  return gt;
+}
+
+function collectGroundTissue(gt) {
+  G.groundTissues = G.groundTissues.filter((t) => t.id !== gt.id);
+  G.tissueCount++;
+  UI.setTissueCount(G.tissueCount);
+  UI.toast('🧻 Picked up a tissue packet!');
+}
+
+function updateGroundTissues(dtMs) {
+  G.groundTissues.forEach((gt) => {
+    gt.timer -= dtMs;
+    if (!gt.warned && gt.timer / TISSUE_DESPAWN_MS < 0.2) {
+      gt.warned = true;
+      UI.toast('🧻 That tissue packet is about to blow away for good!', 1400);
+    }
+  });
+  G.groundTissues = G.groundTissues.filter((gt) => gt.timer > 0);
 }
 
 // ---------- Event callbacks ----------
@@ -153,14 +199,12 @@ function onTelegraph(type, table) {
   else UI.toast(`🐈 A cat is eyeing table #${table.id + 1}'s tissue...`, 1200);
 }
 
-function onCatRetrieved() {
-  G.tissueCount++;
-  UI.setTissueCount(G.tissueCount);
-  UI.toast('🐈 Got your tissue packet back! Chope a table again to use it.');
+function onCatGiveUp() {
+  UI.toast('🐈 The cat gave up running — go grab the tissue it dropped!', 1800);
 }
 
 function onCatEscaped(table) {
-  UI.toast(`🐈 The cat got away with table #${table.id + 1}'s tissue for good...`, 1800);
+  UI.toast(`🐈 The cat made it to its hideout with table #${table.id + 1}'s tissue — gone for good...`, 1800);
 }
 
 function onTissueLost(table, type) {
@@ -293,9 +337,7 @@ function syncHud() {
   G.currentAction = action;
   UI.setPrompt(action ? action.label : null);
 
-  if (G.cat.active && G.cat.state === 'retrieving') {
-    UI.setActionTimer(G.cat.holdTimer / CAT_RETRIEVAL_HOLD_MS, false);
-  } else if (G.graceActive) {
+  if (G.graceActive) {
     UI.setActionTimer(G.graceTimer / TABLE_GRACE_MS, true);
   } else if (['queuing', 'preparing', 'ready', 'carrying'].includes(G.foodStatus)) {
     const fraction = G.foodTimer / G.foodTimerMax;
@@ -305,13 +347,18 @@ function syncHud() {
     UI.setActionTimer(null);
   }
 
+  const birdEventActive = G.bird.active && RandomEvents.type === 'bird';
+  UI.setThrowButtonVisible(birdEventActive);
+  UI.setThrowIndicator(birdEventActive ? G.bird.throwsRemaining : null);
+
   UI.setStress(G.stress);
 }
 
 function update(dtMs) {
   updatePlayerMovement(dtMs);
   G.npcs.forEach((npc) => updateNpc(npc, dtMs, G.tables));
-  RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatRetrieved, onCatEscaped);
+  RandomEvents.update(dtMs, G.tables, G.player, G.bird, G.cat, onTissueLost, onTelegraph, onCatGiveUp, onCatEscaped, spawnGroundTissue);
+  updateGroundTissues(dtMs);
   updateFoodTimer(dtMs);
   updateGrace(dtMs);
   updateEating(dtMs);
@@ -321,6 +368,11 @@ function update(dtMs) {
   if (Input.interactQueue) {
     handleInteract();
     Input.interactQueue = false;
+  }
+
+  if (Input.throwQueue) {
+    handleThrow();
+    Input.throwQueue = false;
   }
 
   syncHud();
@@ -391,6 +443,7 @@ function draw() {
   const drawables = [
     ...G.tables.map((t) => ({ y: t.y, fn: () => drawTable(ctx, t, t.id === G.player.reservedTableId) })),
     ...G.npcs.map((n) => ({ y: n.y, fn: () => drawNpc(ctx, n) })),
+    ...G.groundTissues.map((gt) => ({ y: gt.y, fn: () => drawGroundTissue(ctx, gt) })),
     { y: G.player.y, fn: () => drawPlayer(ctx, G.player) },
   ];
   if (G.cat.active) drawables.push({ y: G.cat.y, fn: () => drawCat(ctx, G.cat) });
@@ -426,6 +479,10 @@ function bindInput() {
       case 'Shift': Input.sprint = true; break;
       case 'e': case 'E': case ' ':
         if (!e.repeat) Input.interactQueue = true;
+        e.preventDefault();
+        break;
+      case 'f': case 'F':
+        if (!e.repeat) Input.throwQueue = true;
         e.preventDefault();
         break;
       default: break;
@@ -498,6 +555,14 @@ function bindInput() {
       Input.interactQueue = true;
     });
   }
+
+  const throwBtn = document.getElementById('btn-throw');
+  if (throwBtn) {
+    throwBtn.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      Input.throwQueue = true;
+    });
+  }
 }
 
 function bindButtons() {
@@ -524,6 +589,7 @@ function showCharacterSelect() {
 
 function boot() {
   UI.init();
+  document.querySelectorAll('.game-version').forEach((el) => { el.textContent = GAME_VERSION; });
   initGame(CHARACTERS.cherie);
   G.phase = 'start';
   UI.showStart();
