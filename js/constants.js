@@ -66,7 +66,7 @@ const NPC_RETARGET_MS = 4000;
 // (EVENT_CHANCE * 0.5 for bird alone) since a chase is a bigger time
 // investment than dodging wind/bird — flag as tunable.
 const CAT_SPEED = 2.6; // px/frame, calm travel speed (unpressured approach / unchased flee)
-const CAT_EVENT_CHANCE = 0.075;
+const CAT_EVENT_CHANCE = 0.6; // TEMP: boosted for rapid cat-only testing — restore to 0.075 when done
 const CAT_GRAB_MS = 500; // pause at the table while the tissue fades out
 const CAT_HIDEOUT_POSITIONS = [
   { x: 60, y: 560 },
