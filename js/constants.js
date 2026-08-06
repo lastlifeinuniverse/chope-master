@@ -45,8 +45,11 @@ const PREP_TIME_MS = [10500, 18000];
 const COLLECTION_TIMER_MS = 13500; // must collect once ready before it's abandoned
 const CARRY_TIMER_MS = 21000; // must deliver once carrying before it's abandoned
 
-// If tissue is lost, player has this long to re-chope before a table is up for grabs
-const TABLE_GRACE_MS = 8000;
+// If tissue is lost, player has this long to re-chope before a table is up for grabs.
+// TEMP: bumped from 8000 — grace starts the instant the cat grabs (same moment
+// the chase begins), so 8s barely covered the ~7s CAT_GIVEUP_MS chase itself,
+// let alone the walk to the dropped tissue and back to re-chope afterward.
+const TABLE_GRACE_MS = 16000;
 
 // NPC diners wandering in to steal empty tables
 const NPC_COUNT = 2;
