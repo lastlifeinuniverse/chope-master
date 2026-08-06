@@ -246,13 +246,14 @@ const RandomEvents = {
       if (toPlayer < CAT_FLEE_RADIUS) {
         // Evade: blend "away from player" with "toward hideout" so it's
         // always making some net progress rather than treadmilling forever
-        // if the player just trails directly behind it. Weighted heavily
-        // toward evasion (0.75) so even imperfect, laggy real-player chasing
-        // still meaningfully delays it, not just frame-perfect pursuit.
+        // if the player just trails directly behind it. TEMP: weighted very
+        // heavily toward evasion (0.9) while there's only one stage — makes
+        // it forgiving to catch; revisit this ratio once there's more
+        // content to pace difficulty against.
         const adx = toPlayer > 0 ? (cat.x - player.x) / toPlayer : 1;
         const ady = toPlayer > 0 ? (cat.y - player.y) / toPlayer : 0;
-        const dx = adx * 0.75 + hdx * 0.25;
-        const dy = ady * 0.75 + hdy * 0.25;
+        const dx = adx * 0.9 + hdx * 0.1;
+        const dy = ady * 0.9 + hdy * 0.1;
         const len = Math.hypot(dx, dy) || 1;
         cat.x = clamp(cat.x + (dx / len) * CAT_FLEE_SPEED, 20, CANVAS_W - 20);
         cat.y = clamp(cat.y + (dy / len) * CAT_FLEE_SPEED, 20, CANVAS_H - 20);

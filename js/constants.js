@@ -74,9 +74,9 @@ const CAT_HIDEOUT_POSITIONS = [
   { x: 480, y: 40 },
 ];
 const CAT_MIN_HIDEOUT_DIST = 250; // a hideout closer than this to the target table is skipped — table #1 sits only ~110px from {480,40}, close enough that the cat could reach it in ~1s no matter how well the player chases
-const CAT_FLEE_RADIUS = 220; // player proximity that triggers evasive movement — generous, so you don't need to be right on top of it
-const CAT_FLEE_SPEED = 2.0; // px/frame while actively evading — deliberately slower than calm CAT_SPEED and every character's base PLAYER_SPEED, so any character can keep pace on foot, sprint not required
-const CAT_GIVEUP_MS = 10500; // total time fleeing before it drops the tissue and bolts (bumped 50% from 7000 to give a sustained chase a realistic chance)
+const CAT_FLEE_RADIUS = 320; // TEMP: very generous while there's only one stage — easy to revisit once there's more content to pace against
+const CAT_FLEE_SPEED = 1.3; // TEMP: slower than every character including Anson's base walk — nobody should struggle to keep pace
+const CAT_GIVEUP_MS = 7000; // TEMP: shorter commitment (was 10500) — still safely above the ~4.8s worst-case unchased escape time, so "don't chase = it gets away" stays true
 
 const EAT_DURATION_MS = 4500; // also scaled 1.5x, see food order timing note above
 
