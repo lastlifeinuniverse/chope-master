@@ -17,6 +17,7 @@ const UI = {
       actionTimerFill: document.getElementById('action-timer-fill'),
       throwIndicator: document.getElementById('throw-indicator'),
       throwBtn: document.getElementById('btn-throw'),
+      chaseIndicator: document.getElementById('chase-indicator'),
       screens: {
         charSelect: document.getElementById('screen-char-select'),
         start: document.getElementById('screen-start'),
@@ -78,6 +79,16 @@ const UI = {
 
   setThrowButtonPrimed(primed) {
     this.els.throwBtn.classList.toggle('primed', primed);
+  },
+
+  setChaseIndicator(fraction) {
+    if (fraction === null || fraction === undefined) {
+      this.els.chaseIndicator.classList.add('hidden');
+      return;
+    }
+    const pct = Math.round(clamp(fraction, 0, 1) * 100);
+    this.els.chaseIndicator.textContent = `🐈 ${pct}%`;
+    this.els.chaseIndicator.classList.remove('hidden');
   },
 
   toast(message, duration = 2600) {

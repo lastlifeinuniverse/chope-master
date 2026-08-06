@@ -136,6 +136,15 @@ function getAvailableAction() {
     return { type: 'hint', label };
   }
 
+  // Also purely informational — there's no button for this, just proximity.
+  // The chase-indicator HUD badge shows the actual give-up progress.
+  if (G.cat.active && G.cat.state === 'fleeing') {
+    const label = dist(p, G.cat) < CAT_FLEE_RADIUS
+      ? '🐈 Keep chasing — stay close to force it to drop the tissue!'
+      : '🐈 It\'s getting away — catch up and stay close!';
+    return { type: 'hint', label };
+  }
+
   return null;
 }
 
@@ -391,6 +400,8 @@ function syncHud() {
   UI.setThrowButtonVisible(birdEventActive);
   UI.setThrowIndicator(birdEventActive ? G.bird.throwsRemaining : null);
   UI.setThrowButtonPrimed(birdEventActive && dist(G.player, G.bird) < THROW_RANGE);
+
+  UI.setChaseIndicator(G.cat.active && G.cat.state === 'fleeing' ? G.cat.giveupTimer / CAT_GIVEUP_MS : null);
 
   UI.setStress(G.stress);
 }
