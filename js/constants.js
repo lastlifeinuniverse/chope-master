@@ -24,7 +24,7 @@ const TABLE_COUNT = 5;
 
 // Random event timing (wind / bird) — only fires while a table is reserved.
 const EVENT_CHECK_MS = 3200;
-const EVENT_CHANCE = 0.30;
+const EVENT_CHANCE = 0; // TEMP: wind/bird disabled for cat-only testing — restore to 0.30 when done
 const EVENT_WARNING_MS = 900; // brief telegraph before the event actually hits
 
 // Ground tissue — dropped by wind/bird/cat, walk up + interact to reclaim it.
