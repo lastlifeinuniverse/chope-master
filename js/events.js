@@ -178,7 +178,8 @@ const RandomEvents = {
     cat.x = table.x;
     cat.y = CANVAS_H + 30;
     cat.targetTableId = table.id;
-    cat.hideout = choice(CAT_HIDEOUT_POSITIONS);
+    const farEnough = CAT_HIDEOUT_POSITIONS.filter((h) => dist(table, h) >= CAT_MIN_HIDEOUT_DIST);
+    cat.hideout = choice(farEnough.length > 0 ? farEnough : CAT_HIDEOUT_POSITIONS);
     cat.t = 0;
     cat.giveupTimer = 0;
 
@@ -245,11 +246,13 @@ const RandomEvents = {
       if (toPlayer < CAT_FLEE_RADIUS) {
         // Evade: blend "away from player" with "toward hideout" so it's
         // always making some net progress rather than treadmilling forever
-        // if the player just trails directly behind it.
+        // if the player just trails directly behind it. Weighted heavily
+        // toward evasion (0.75) so even imperfect, laggy real-player chasing
+        // still meaningfully delays it, not just frame-perfect pursuit.
         const adx = toPlayer > 0 ? (cat.x - player.x) / toPlayer : 1;
         const ady = toPlayer > 0 ? (cat.y - player.y) / toPlayer : 0;
-        const dx = adx * 0.6 + hdx * 0.4;
-        const dy = ady * 0.6 + hdy * 0.4;
+        const dx = adx * 0.75 + hdx * 0.25;
+        const dy = ady * 0.75 + hdy * 0.25;
         const len = Math.hypot(dx, dy) || 1;
         cat.x = clamp(cat.x + (dx / len) * CAT_FLEE_SPEED, 20, CANVAS_W - 20);
         cat.y = clamp(cat.y + (dy / len) * CAT_FLEE_SPEED, 20, CANVAS_H - 20);
