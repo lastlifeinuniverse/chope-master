@@ -53,10 +53,12 @@ const RandomEvents = {
   startWindOrBird(table, bird, onTelegraph) {
     this.active = true;
     this.targetTable = table;
+    // TEMP: wind forced off for pigeon-only testing (was Math.random() < 0.5
+    // ? 'wind' : 'bird') — restore the coin flip when wind comes back.
     // If a previously-hit bird is still finishing its exit flight, force
     // wind instead — the bird entity is a single reused object, so starting
     // a new bird event now would teleport the still-fleeing one mid-flight.
-    this.type = (Math.random() < 0.5 || bird.active) ? 'wind' : 'bird';
+    this.type = bird.active ? 'wind' : 'bird';
     this.t = 0;
 
     if (this.type === 'bird') {
