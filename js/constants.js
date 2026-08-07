@@ -77,7 +77,7 @@ const CAT_HIDEOUT_POSITIONS = [
   { x: 480, y: 40 },
 ];
 const CAT_MIN_HIDEOUT_DIST = 250; // a hideout closer than this to the target table is skipped — table #1 sits only ~110px from {480,40}, close enough that the cat could reach it in ~1s no matter how well the player chases
-const CAT_FLEE_RADIUS = 320; // TEMP: very generous while there's only one stage — easy to revisit once there's more content to pace against
+const CAT_FLEE_RADIUS = 150; // TEMP: pulled back down from 320 — that was so large relative to the 960x600 map that just standing still near the middle of the map (no chasing at all) was accidentally forcing give-ups ~60% of the time. Still more generous than the original 160 -> 220 progression, but requires actually approaching it
 const CAT_FLEE_SPEED = 1.3; // TEMP: slower than every character including Anson's base walk — nobody should struggle to keep pace
 const CAT_GIVEUP_MS = 7000; // TEMP: shorter commitment (was 10500) — still safely above the ~4.8s worst-case unchased escape time, so "don't chase = it gets away" stays true
 
