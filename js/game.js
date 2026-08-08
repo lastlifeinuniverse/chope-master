@@ -270,11 +270,11 @@ function onTissueLost(table, type) {
   const foodOrdered = ['queuing', 'preparing', 'ready', 'carrying'].includes(G.foodStatus);
   if (!foodOrdered) return;
 
-  if (G.tissueCount <= 0) {
-    triggerLose('out_of_tissue', 'Your tissue was gone and you had no packets left to chope another table!');
-    return;
-  }
-
+  // Grace starts even at 0 spare tissue — if this steal is recoverable (wind's
+  // drop, a shoe hit on the bird, or forcing the cat to give up), the player
+  // gets the same window to chase it down and re-chope as anyone with a
+  // spare in reserve. The actual "ran out of tissue" loss is only final if
+  // grace runs out and they still never got one back — see updateGrace().
   G.graceActive = true;
   G.graceTableId = table.id;
   G.graceTimer = TABLE_GRACE_MS;
@@ -348,6 +348,13 @@ function updateFoodTimer(dtMs) {
   }
 }
 
+function graceFailMessage() {
+  if (G.tissueCount <= 0) {
+    return { key: 'out_of_tissue', message: "You never got a tissue packet back in time and had none left to chope another table!" };
+  }
+  return { key: 'table_stolen', message: `You didn't make it back in time — another customer sat down at table #${G.graceTableId + 1}!` };
+}
+
 function updateGrace(dtMs) {
   if (!G.graceActive) return;
   const table = G.tables[G.graceTableId];
@@ -359,7 +366,8 @@ function updateGrace(dtMs) {
 
   if (!table || table.state !== 'empty') {
     G.graceActive = false;
-    triggerLose('table_stolen', `You didn't make it back in time — another customer sat down at table #${G.graceTableId + 1}!`);
+    const fail = graceFailMessage();
+    triggerLose(fail.key, fail.message);
     return;
   }
 
@@ -368,7 +376,8 @@ function updateGrace(dtMs) {
     table.state = 'occupied_by_npc';
     table.occupantNpcId = null;
     G.graceActive = false;
-    triggerLose('table_stolen', `You didn't make it back in time — another customer sat down at table #${G.graceTableId + 1}!`);
+    const fail = graceFailMessage();
+    triggerLose(fail.key, fail.message);
   }
 }
 
